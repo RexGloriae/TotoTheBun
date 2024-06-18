@@ -25,15 +25,43 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 def flipImg(sprites):
     return [pygame.transform.flip(sprite, True, False) for sprite in sprites]
 
-def loadTrapSheet(width, height):
-    all_sprites = {}
+def loadCarrotCollectible(width, height):
+    carrot = pygame.image.load(f'assets/Collectibles/Carrot.png').convert_alpha()
+    scale = height / carrot.get_height()
+    new_width = carrot.get_width() * scale
+    new_height = carrot.get_height() * scale
+    carrot = pygame.transform.scale(carrot, (new_width, new_height))
     
-    # load Fire Sprites
-    fire_sprites = []
-    
-    # load spike
+    return pygame.transform.scale2x(carrot)
+
+def loadFireSheet(width, height):
+    path = join("assets", "Traps", "Fire")
+    images = [f for f in listdir(path) if isfile(join(path, f))]
+
+    fire = {}
+
+    for image in images:
+        sprite_sheet = pygame.image.load(join(path, image)).convert_alpha()
+
+        sprites = []
+        for i in range(sprite_sheet.get_width() // width):
+            surface = pygame.Surface((width, height), pygame.SRCALPHA, 32)
+            rect = pygame.Rect(i * width, 0, width, height)
+            surface.blit(sprite_sheet, (0, 0), rect)
+            sprites.append(pygame.transform.scale2x(surface))
+
+        fire[image.replace(".png", "")] = sprites
+
+    return fire
+
+def loadSpike(width, height):  
     spike = pygame.image.load(f'assets/Traps/Spike/Idle.png').convert_alpha()
-    scale = height 
+    scale = height / spike.get_height()
+    new_width = spike.get_width() * scale
+    new_height = spike.get_height() * scale
+    spike = pygame.transform.scale(spike, (new_width, new_height))
+    
+    return pygame.transform.scale2x(spike)
 
 def loadSpriteSheet(player_width, player_height):
     
@@ -179,6 +207,9 @@ class Player(pygame.sprite.Sprite):
         self.fall_count = 0
         self.jump_count = 0
         
+        self.hit = False
+        self.hit_count = 0
+        
     def jump(self):
         multiplier = 6
         if self.jump_count == 1:
@@ -196,6 +227,11 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += dx
         self.rect.y += dy
         
+    def getHit(self):
+        self.hit = True
+        self.hit_count = 0
+        
+        
     def moveLeft(self, speed):
         self.x_speed = -speed
         if self.direction != "left":
@@ -211,6 +247,13 @@ class Player(pygame.sprite.Sprite):
     def loop(self, fps):
         self.y_speed += min(1, (self.fall_count / fps) * self.GRAVITY)
         self.move(self.x_speed, self.y_speed)
+        
+        if self.hit:
+            self.hit_count += 1
+            
+        if self.hit_count > fps // 2:
+            self.hit = False
+            self.hit_count = 0
         
         self.fall_count += 1
         
@@ -228,7 +271,9 @@ class Player(pygame.sprite.Sprite):
         
     def updateSprite(self):
         sprite_sheet = "idle"
-        if self.y_speed < 0:
+        if self.hit:
+            sprite_sheet = "dizzy"
+        elif self.y_speed < 0:
             sprite_sheet = "jump"
         elif self.y_speed > self.GRAVITY * 2:
             sprite_sheet = "fall"
@@ -276,10 +321,56 @@ class Block(Object):
         self.mask = pygame.mask.from_surface(self.image)
         
 class Fire(Object):
+    LATENCY = 3
+    
     def __init__(self, x, y, width, height):
-        super().__init__(self, x, y, width, height, "fire")
-        self.fire 
+        super().__init__(x, y, width, height, "fire")
+        self.fire = loadFireSheet(width, height)
+        self.image = self.fire["off"][0]
+        self.mask = pygame.mask.from_surface(self.image)
+        self.anim_count = 0
+        self.anim_name = "off"
         
+    def on(self):
+        self.anim_name = "on"
+        
+    def off(self):
+        self.anim_name = "off"
+        
+    def loop(self):
+        sprites = self.fire[self.anim_name]
+        
+        index = (self.anim_count // self.LATENCY) % len(sprites)
+        
+        self.image = sprites[index]
+        self.anim_count += 1
+        
+        self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
+        self.mask = pygame.mask.from_surface(self.image)
+        
+        if (self.anim_count // self.LATENCY) > len(sprites):
+            self.anim_count = 0
+
+class Spike(Object):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height, "spike")
+        
+        self.image = loadSpike(width, height)
+        
+    def loop(self):
+        self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
+        self.mask = pygame.mask.from_surface(self.image)
+        
+class Carrot(Object):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height, "carrot")
+        
+        self.is_collected = False
+        self.image = loadCarrotCollectible(width, height)
+        
+    def loop(self):
+        self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
+        self.mask = pygame.mask.from_surface(self.image)
 
 def handleVerticalCollision(player, objects, dy):
     collided_objects = []
@@ -291,7 +382,7 @@ def handleVerticalCollision(player, objects, dy):
             elif dy < 0:
                 player.rect.top = obj.rect.bottom
                 player.hitHead()
-        collided_objects.append(obj)
+            collided_objects.append(obj)
         
     return collided_objects
 
@@ -324,7 +415,14 @@ def handleMovement(player, objects):
     if keys[pygame.K_d] and not collide_right:
         player.moveRight(PLAYER_SPEED)
         
-    handleVerticalCollision(player, objects, player.y_speed)
+    vertical_collide = handleVerticalCollision(player, objects, player.y_speed)
+    to_check = [collide_left, collide_right, *vertical_collide]
+    
+    for obj in to_check:
+        if obj and obj.name == "fire":
+            player.getHit()
+        elif obj and obj.name == "spike":
+            player.getHit()
 
 # background function
 def getBackground(level):
@@ -377,8 +475,23 @@ def main(screen):
     
     floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-WIDTH // block_size, WIDTH * 2 // block_size)]
     
-    objects = [*floor, Block(0, HEIGHT - block_size * 2, block_size), Block(block_size * 3, HEIGHT - block_size * 4, block_size)]
+    # generate traps    
+    fire = Fire(100, HEIGHT - block_size - 64, 16, 32)
+    fire.on()
     
+    spike = Spike(100-block_size-32, HEIGHT - block_size - 32, 16, 16)
+    
+    # generate collectibles
+    
+    carrot = Carrot(100+2*block_size, HEIGHT - block_size - 64, 32, 32)
+    
+    # create objects list
+    objects = [*floor,
+               Block(0, HEIGHT - block_size * 2, block_size),
+               Block(block_size * 3, HEIGHT - block_size * 4, block_size),
+            fire, spike, carrot]
+    
+    # background scrolling variables
     offset_x = 0
     scrolling_area_width = 200
     
@@ -398,6 +511,9 @@ def main(screen):
                     player.jump()
                     
         player.loop(FPS)
+        fire.loop()
+        spike.loop()
+        carrot.loop()
         handleMovement(player, objects)
         drawScreen(screen, 1, player, objects, offset_x)
         
