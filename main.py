@@ -25,6 +25,16 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 def flipImg(sprites):
     return [pygame.transform.flip(sprite, True, False) for sprite in sprites]
 
+def loadTrapSheet(width, height):
+    all_sprites = {}
+    
+    # load Fire Sprites
+    fire_sprites = []
+    
+    # load spike
+    spike = pygame.image.load(f'assets/Traps/Spike/Idle.png').convert_alpha()
+    scale = height 
+
 def loadSpriteSheet(player_width, player_height):
     
     all_sprites = {}
@@ -44,17 +54,30 @@ def loadSpriteSheet(player_width, player_height):
         
     # Load Jumping Sprites
     jumping_sprites = []
-    for i in range(1, 7):
-        sprite = pygame.image.load(f'assets/Player_Sprites/Jump/a{i}.png').convert_alpha()
-        scale = player_height / sprite.get_height()
-        new_width = sprite.get_width() * scale
-        new_height = sprite.get_height() * scale
-        sprite = pygame.transform.scale(sprite, (new_width, new_height))
-        jumping_sprites.append(sprite)
+    
+    sprite = pygame.image.load(f'assets/Player_Sprites/Jump/a2.png').convert_alpha()
+    scale = player_height / sprite.get_height()
+    new_width = sprite.get_width() * scale
+    new_height = sprite.get_height() * scale
+    sprite = pygame.transform.scale(sprite, (new_width, new_height))
+    jumping_sprites.append(sprite)
     
     all_sprites["jump" + "_right"] = jumping_sprites
     all_sprites["jump" + "_left"] = flipImg(jumping_sprites)
-        
+    
+    # Load Fall Sprites
+    falling_sprites = []
+    
+    sprite = pygame.image.load(f'assets/Player_Sprites/Jump/a5.png').convert_alpha()
+    scale = player_height / sprite.get_height()
+    new_width = sprite.get_width() * scale
+    new_height = sprite.get_height() * scale
+    sprite = pygame.transform.scale(sprite, (new_width, new_height))
+    falling_sprites.append(sprite)
+    
+    all_sprites["fall" + "_right"] = falling_sprites
+    all_sprites["fall" + "_left"] = flipImg(falling_sprites)
+            
     # Load Faint Sprite
     faint_sprites = []
     for i in range(1, 6):
@@ -154,6 +177,19 @@ class Player(pygame.sprite.Sprite):
         self.animation_count = 0
         
         self.fall_count = 0
+        self.jump_count = 0
+        
+    def jump(self):
+        multiplier = 6
+        if self.jump_count == 1:
+            multiplier = 9
+        
+        self.y_speed = -self.GRAVITY * multiplier
+        self.animation_count = 0
+        self.jump_count += 1
+        
+        if self.jump_count == 1:
+            self.fall_count = 0
         
         
     def move(self, dx, dy):
@@ -173,16 +209,30 @@ class Player(pygame.sprite.Sprite):
             self.animation_count = 0
     
     def loop(self, fps):
-        #self.y_speed += min(1, (self.fall_count / fps) * self.GRAVITY)
+        self.y_speed += min(1, (self.fall_count / fps) * self.GRAVITY)
         self.move(self.x_speed, self.y_speed)
         
         self.fall_count += 1
         
         self.updateSprite()
         
+    def landed(self):
+        self.fall_count = 0
+        self.y_speed = 0
+        self.jump_count = 0
+        
+    def hitHead(self):
+        self.count = 0
+        self.y_speed *= -1
+        
+        
     def updateSprite(self):
         sprite_sheet = "idle"
-        if self.x_speed != 0:
+        if self.y_speed < 0:
+            sprite_sheet = "jump"
+        elif self.y_speed > self.GRAVITY * 2:
+            sprite_sheet = "fall"
+        elif self.x_speed != 0:
             sprite_sheet = "run"
             
         sprite_sheet_name = sprite_sheet + "_" + self.direction
@@ -200,8 +250,8 @@ class Player(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.sprite)
         
         
-    def draw(self, disp):
-        disp.blit(self.sprite, (self.rect.x, self.rect.y))
+    def draw(self, disp, offset_x):
+        disp.blit(self.sprite, (self.rect.x - offset_x, self.rect.y))
 
 class Object(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, name = None):
@@ -213,8 +263,8 @@ class Object(pygame.sprite.Sprite):
         self.height = height
         self.name = name
         
-    def draw(self, disp):
-        disp.blit(self.image, (self.rect.x, self.rect.y))
+    def draw(self, disp, offset_x):
+        disp.blit(self.image, (self.rect.x - offset_x, self.rect.y))
         
         
 class Block(Object):
@@ -224,16 +274,57 @@ class Block(Object):
         block = loadBlock(size)
         self.image.blit(block, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
-    
+        
+class Fire(Object):
+    def __init__(self, x, y, width, height):
+        super().__init__(self, x, y, width, height, "fire")
+        self.fire 
+        
 
-def handleMovement(player):
+def handleVerticalCollision(player, objects, dy):
+    collided_objects = []
+    for obj in objects:
+        if pygame.sprite.collide_mask(player, obj):
+            if dy > 0:
+                player.rect.bottom = obj.rect.top
+                player.landed()
+            elif dy < 0:
+                player.rect.top = obj.rect.bottom
+                player.hitHead()
+        collided_objects.append(obj)
+        
+    return collided_objects
+
+def collide(player, objects, dx):
+    player.move(dx, 0)
+    player.update()
+    
+    collided_object = None
+    
+    for obj in objects:
+        if pygame.sprite.collide_mask(player, obj):
+            collided_object = obj
+            break
+        
+    player.move(-dx, 0)
+    player.update()
+    
+    return collided_object
+
+def handleMovement(player, objects):
     keys = pygame.key.get_pressed()
     
+    collide_left = collide(player, objects, -PLAYER_SPEED * 2)
+    collide_right = collide(player, objects, PLAYER_SPEED * 2)
+    
+    
     player.x_speed = 0
-    if keys[pygame.K_a]:
+    if keys[pygame.K_a] and not collide_left:
         player.moveLeft(PLAYER_SPEED)
-    if keys[pygame.K_d]:
+    if keys[pygame.K_d] and not collide_right:
         player.moveRight(PLAYER_SPEED)
+        
+    handleVerticalCollision(player, objects, player.y_speed)
 
 # background function
 def getBackground(level):
@@ -258,7 +349,7 @@ def getBackground(level):
     
     return img
 
-def drawScreen(screen, level, player, objects):
+def drawScreen(screen, level, player, objects, offset_x):
     # set BackGround    
     background_img = getBackground(1)
     background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
@@ -266,10 +357,10 @@ def drawScreen(screen, level, player, objects):
     
     # draw objects
     for obj in objects:
-        obj.draw(screen)
+        obj.draw(screen, offset_x)
     
     # draw Player
-    player.draw(screen)
+    player.draw(screen, offset_x)
     
     pygame.display.update()    
 
@@ -286,6 +377,11 @@ def main(screen):
     
     floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-WIDTH // block_size, WIDTH * 2 // block_size)]
     
+    objects = [*floor, Block(0, HEIGHT - block_size * 2, block_size), Block(block_size * 3, HEIGHT - block_size * 4, block_size)]
+    
+    offset_x = 0
+    scrolling_area_width = 200
+    
     # game run loop
     run = True
     while run:
@@ -296,9 +392,18 @@ def main(screen):
             if event.type == pygame.QUIT: # quit if players closes screen
                 run = False
                 break
+            
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_w and player.jump_count < 2:
+                    player.jump()
+                    
         player.loop(FPS)
-        handleMovement(player)
-        drawScreen(screen, 1, player, floor)
+        handleMovement(player, objects)
+        drawScreen(screen, 1, player, objects, offset_x)
+        
+        if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
+            (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
+            offset_x += player.x_speed
             
     pygame.quit()
     quit()
