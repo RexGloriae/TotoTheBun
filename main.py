@@ -191,6 +191,8 @@ class Player(pygame.sprite.Sprite):
     SPRITES = loadSpriteSheet(64, 64)
     LATENCY = 3
     
+    HEALTH_IMG = loadHealthSprites(30, 30)
+    
     def __init__(self, x, y, width, height):
         super().__init__()
         
@@ -212,6 +214,7 @@ class Player(pygame.sprite.Sprite):
         
         self.health = 3
         self.invincibility = False
+        self.health_anim = 0
         
     def jump(self):
         multiplier = 6
@@ -275,18 +278,12 @@ class Player(pygame.sprite.Sprite):
         self.count = 0
         self.y_speed *= -1
     
-    def displayHealth(self, disp, img):
-        index = 0
+    def displayHealth(self, disp):
         for life in range(self.health):
-            sprite = img[int(index)]
+            sprite = self.HEALTH_IMG[self.health_anim]
             x_pos = 10 + life * (sprite.get_width() + 10)
             y_pos = 10
             disp.blit(sprite, (x_pos, y_pos))
-            
-        index += 0.1
-        
-        if index >= len(img):
-            index = 0
         
     def updateSprite(self):
         sprite_sheet = "idle"
@@ -309,6 +306,11 @@ class Player(pygame.sprite.Sprite):
         self.sprite = sprites[index]
         self.animation_count += 1
         
+        self.health_anim += 1
+        if(self.health_anim >= len(self.HEALTH_IMG)):
+            self.health_anim = 0
+            
+        
         self.update()
         
     def update(self):
@@ -318,6 +320,7 @@ class Player(pygame.sprite.Sprite):
         
     def draw(self, disp, offset_x):
         disp.blit(self.sprite, (self.rect.x - offset_x, self.rect.y))
+        self.displayHealth(disp)
 
 class Object(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, name = None):
@@ -473,13 +476,11 @@ def getBackground(level):
     
     return img
 
-def drawScreen(screen, level, player, objects, offset_x, health):
+def drawScreen(screen, level, player, objects, offset_x):
     # set BackGround    
     background_img = getBackground(1)
     background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
     screen.blit(background_img, (0, 0))
-    
-    player.displayHealth(screen, health)
     
     # draw objects
     for obj in objects:
@@ -497,9 +498,6 @@ def main(screen):
     
     # generate Player
     player = Player(100, 100, 50, 50)
-    
-    # load health sprites
-    health = loadHealthSprites(30, 30)
     
     # generate blocks
     block_size = 96 
@@ -546,7 +544,7 @@ def main(screen):
         spike.loop()
         carrot.loop()
         handleMovement(player, objects)
-        drawScreen(screen, 1, player, objects, offset_x, health)
+        drawScreen(screen, 1, player, objects, offset_x)
         
         if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
             (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
