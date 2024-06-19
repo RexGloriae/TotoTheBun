@@ -278,8 +278,9 @@ class Player(pygame.sprite.Sprite):
         self.y_speed *= -1
     
     def displayHealth(self, disp):
+        index = (self.health_anim // self.LATENCY) % len(self.HEALTH_IMG)
         for life in range(self.health):
-            sprite = self.HEALTH_IMG[self.health_anim]
+            sprite = self.HEALTH_IMG[index]
             x_pos = 10 + life * (sprite.get_width() + 10)
             y_pos = 10
             disp.blit(sprite, (x_pos, y_pos))
@@ -306,7 +307,7 @@ class Player(pygame.sprite.Sprite):
         self.animation_count += 1
         
         self.health_anim += 1
-        if(self.health_anim >= len(self.HEALTH_IMG)):
+        if(self.health_anim >= len(self.HEALTH_IMG) * self.LATENCY):
             self.health_anim = 0
             
         
