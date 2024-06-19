@@ -253,10 +253,6 @@ class Player(pygame.sprite.Sprite):
         self.y_speed += min(1, (self.fall_count / fps) * self.GRAVITY)
         self.move(self.x_speed, self.y_speed)
         
-        if self.health <= 0:
-            pygame.quit()
-            quit()
-        
         if self.hit:
             self.hit_count += 1
             
@@ -264,6 +260,9 @@ class Player(pygame.sprite.Sprite):
             self.hit = False
             self.hit_count = 0
             self.invincibility = False
+            if self.health <= 0:
+                pygame.quit()
+                quit()
         
         self.fall_count += 1
         
