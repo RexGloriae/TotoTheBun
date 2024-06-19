@@ -158,20 +158,20 @@ def loadSpriteSheet(player_width, player_height):
     all_sprites["shoot" + "_right"] = shoot_sprites
     all_sprites["shoot" + "_left"] = flipImg(shoot_sprites)
     
+    return all_sprites
+
+def loadHealthSprites(width, height):
     # load Health Sprite
     health_sprites = []
     for i in range(1, 9):
         sprite = pygame.image.load(f'assets/Player_Sprites/HearTile/Cuore{i}.png').convert_alpha()
-        scale = player_height / sprite.get_height() // 2
+        scale = height / sprite.get_height()
         new_width = sprite.get_width() * scale
         new_height = sprite.get_height() * scale
         sprite = pygame.transform.scale(sprite, (new_width, new_height))
         health_sprites.append(sprite)
     
-    all_sprites["health"] = health_sprites
-    
-    return all_sprites
-
+    return health_sprites
 
 # load terrain
 def loadBlock(size):
@@ -210,6 +210,9 @@ class Player(pygame.sprite.Sprite):
         self.hit = False
         self.hit_count = 0
         
+        self.health = 3
+        self.invincibility = False
+        
     def jump(self):
         multiplier = 6
         if self.jump_count == 1:
@@ -231,7 +234,6 @@ class Player(pygame.sprite.Sprite):
         self.hit = True
         self.hit_count = 0
         
-        
     def moveLeft(self, speed):
         self.x_speed = -speed
         if self.direction != "left":
@@ -248,12 +250,17 @@ class Player(pygame.sprite.Sprite):
         self.y_speed += min(1, (self.fall_count / fps) * self.GRAVITY)
         self.move(self.x_speed, self.y_speed)
         
+        if self.health <= 0:
+            pygame.quit()
+            quit()
+        
         if self.hit:
             self.hit_count += 1
             
         if self.hit_count > fps // 2:
             self.hit = False
             self.hit_count = 0
+            self.invincibility = False
         
         self.fall_count += 1
         
@@ -267,11 +274,25 @@ class Player(pygame.sprite.Sprite):
     def hitHead(self):
         self.count = 0
         self.y_speed *= -1
+    
+    def displayHealth(self, disp, img):
+        index = 0
+        for life in range(self.health):
+            sprite = img[int(index)]
+            x_pos = 10 + life * (sprite.get_width() + 10)
+            y_pos = 10
+            disp.blit(sprite, (x_pos, y_pos))
+            
+        index += 0.1
         
+        if index >= len(img):
+            index = 0
         
     def updateSprite(self):
         sprite_sheet = "idle"
-        if self.hit:
+        if self.health <= 0:
+            sprite_sheet = "faint"
+        elif self.hit:
             sprite_sheet = "dizzy"
         elif self.y_speed < 0:
             sprite_sheet = "jump"
@@ -419,10 +440,15 @@ def handleMovement(player, objects):
     to_check = [collide_left, collide_right, *vertical_collide]
     
     for obj in to_check:
-        if obj and obj.name == "fire":
+        if obj and obj.name == "fire" and player.invincibility == False:
             player.getHit()
-        elif obj and obj.name == "spike":
+            player.health -= 1
+            player.invincibility = True
+        elif obj and obj.name == "spike" and player.invincibility == False:
             player.getHit()
+            player.health -= 1
+            player.invincibility = True
+
 
 # background function
 def getBackground(level):
@@ -447,11 +473,13 @@ def getBackground(level):
     
     return img
 
-def drawScreen(screen, level, player, objects, offset_x):
+def drawScreen(screen, level, player, objects, offset_x, health):
     # set BackGround    
     background_img = getBackground(1)
     background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
     screen.blit(background_img, (0, 0))
+    
+    player.displayHealth(screen, health)
     
     # draw objects
     for obj in objects:
@@ -469,6 +497,9 @@ def main(screen):
     
     # generate Player
     player = Player(100, 100, 50, 50)
+    
+    # load health sprites
+    health = loadHealthSprites(30, 30)
     
     # generate blocks
     block_size = 96 
@@ -515,7 +546,7 @@ def main(screen):
         spike.loop()
         carrot.loop()
         handleMovement(player, objects)
-        drawScreen(screen, 1, player, objects, offset_x)
+        drawScreen(screen, 1, player, objects, offset_x, health)
         
         if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
             (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
