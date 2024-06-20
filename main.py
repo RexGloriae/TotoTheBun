@@ -603,8 +603,7 @@ def loopCollectibles(items):
 # main function
 def main(screen):
     clock = pygame.time.Clock()
-    
-    
+        
     # generate Player
     player = Player(100, 100, 50, 50)
     
@@ -637,11 +636,11 @@ def main(screen):
     offset_x = 0
     scrolling_area_width = 200
     
+    # check if game is paused
+    IS_PAUSED = False
     # game run loop
     run = True
     while run:
-        clock.tick(FPS)  
-        
         # manage Events
         for event in pygame.event.get():
             if event.type == pygame.QUIT: # quit if players closes screen
@@ -649,19 +648,26 @@ def main(screen):
                 break
             
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w and player.jump_count < 2:
-                    player.jump()
-                    
-        player.loop(FPS)
-        loopTraps(traps)
-        loopCollectibles(collectibles)
-        handleMovement(player, objects, collectibles)
-        drawScreen(screen, 1, player, objects, collectibles, offset_x)
-        
-        if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
-            (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
-            offset_x += player.x_speed
-            
+                if event.key == pygame.K_SPACE:
+                    IS_PAUSED = not IS_PAUSED
+                    if IS_PAUSED:
+                        drawText(screen, "Game Paused!", 64, (0, 0, 0), WIDTH // 6, HEIGHT / 2.5)
+                        pygame.display.flip()
+                
+                if not IS_PAUSED:
+                    if event.key == pygame.K_w and player.jump_count < 2:
+                        player.jump()
+        if not IS_PAUSED:
+            player.loop(FPS)
+            loopTraps(traps)
+            loopCollectibles(collectibles)
+            handleMovement(player, objects, collectibles)
+            drawScreen(screen, 1, player, objects, collectibles, offset_x)
+
+            if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
+                (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
+                offset_x += player.x_speed
+
     pygame.quit()
     quit()
 
