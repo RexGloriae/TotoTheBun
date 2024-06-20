@@ -567,7 +567,7 @@ def drawText(screen, text, size, color, x, y):
 
 def drawScreen(screen, level, player, objects, collectibles, offset_x):
     # set BackGround    
-    background_img = getBackground(1)
+    background_img = getBackground(level)
     background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
     screen.blit(background_img, (0, 0))
     
@@ -600,8 +600,105 @@ def loopCollectibles(items):
     for obj in items:
         obj.loop()
 
+def loadLevelImgs(width, height):
+    images = []
+    for i in range(1, 9):
+        img = pygame.image.load(f'assets/Level_Buttons/0{i}.png').convert_alpha()
+        scale = height / img.get_height()
+        new_width = img.get_width() * scale
+        new_height = img.get_height() * scale
+        img = pygame.transform.scale(img, (new_width, new_height))
+        images.append(pygame.transform.scale2x(img))
+        
+    return images
+
+def getLevelButtons(screen, width, height):
+    # button coordinates
+    x1 = width // 7
+    x2 = 2.5*x1
+    x3 = 4*x1
+    x4 = 5.5*x1
+    
+    x = [x1, x2, x3, x4]
+    
+    y1 = height - height // 2
+    y2 = y1 + 150
+    
+    y = [y1, y2]
+    
+    buttons = []
+    
+    # drawing buttons
+    index_x = 0
+    index_y = 0
+    for img in range(9):
+        button_rect = pygame.Rect(x[index_x], y[index_y], 64, 64)
+        buttons.append(button_rect)
+        
+        index_x += 1
+        if(index_x == 4):
+            index_x = 0
+            index_y = 1
+            
+    return buttons
+
+def waitForButtonSelection(buttons):
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = event.pos
+                for idx, button in enumerate(buttons):
+                    if button.collidepoint(mouse_pos):
+                        return idx + 1
+
+def drawMenu(screen, width, height):
+    img = pygame.image.load("assets/Backgrounds/menu/menu.png")
+    img = pygame.transform.scale(img, (width, height))
+    screen.blit(img, (0, 0))
+    
+    levels = loadLevelImgs(32, 32)
+    
+    # button coordinates
+    x1 = width // 7
+    x2 = 2.5*x1
+    x3 = 4*x1
+    x4 = 5.5*x1
+    
+    x = [x1, x2, x3, x4]
+    
+    y1 = height - height // 2
+    y2 = y1 + 150
+    
+    y = [y1, y2]
+    
+    # drawing buttons
+    index_x = 0
+    index_y = 0
+    for img in levels:
+        screen.blit(img, (x[index_x], y[index_y]))
+        
+        index_x += 1
+        if(index_x == 4):
+            index_x = 0
+            index_y = 1
+            
+    # drawing text
+    drawText(screen, "Toto the Bun:", 64, (255, 255, 255), WIDTH // 8, 20)
+    drawText(screen, "the Great Carrot Adventure", 36, (255, 255, 255), WIDTH // 18, 84)
+    drawText(screen, "Select a Level:", 24, (255, 255, 255), 25, HEIGHT // 2 - 24)
+    
+    pygame.display.flip()
+
+
 # main function
 def main(screen):
+    buttons = getLevelButtons(screen, WIDTH, HEIGHT)
+    drawMenu(screen, WIDTH, HEIGHT)
+    level = waitForButtonSelection(buttons)
+    
     clock = pygame.time.Clock()
         
     # generate Player
@@ -647,6 +744,7 @@ def main(screen):
                 run = False
                 break
             
+            # manage game pausing
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     IS_PAUSED = not IS_PAUSED
@@ -662,7 +760,7 @@ def main(screen):
             loopTraps(traps)
             loopCollectibles(collectibles)
             handleMovement(player, objects, collectibles)
-            drawScreen(screen, 1, player, objects, collectibles, offset_x)
+            drawScreen(screen, level, player, objects, collectibles, offset_x)
 
             if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
                 (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
