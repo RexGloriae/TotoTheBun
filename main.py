@@ -81,6 +81,18 @@ def loadSpike(width, height):
     
     return pygame.transform.scale2x(spike)
 
+def loadPortal(width, height):
+    portal = []
+    for i in range(1, 7):
+        img = pygame.image.load(f'assets/Portal/p{i}.png').convert_alpha()
+        scale = height / img.get_height()
+        new_width = img.get_width() * scale
+        new_height = img.get_height() * scale
+        img = pygame.transform.scale(img, (new_width, new_height))
+        portal.append(pygame.transform.scale2x(img))
+        
+    return portal
+
 def loadSpriteSheet(player_width, player_height):
     
     all_sprites = {}
@@ -176,6 +188,19 @@ def loadSpriteSheet(player_width, player_height):
     all_sprites["shoot" + "_right"] = shoot_sprites
     all_sprites["shoot" + "_left"] = flipImg(shoot_sprites)
     
+    # load explode sprite
+    explode_sprite = []
+    for i in range(1, 6):
+        sprite = pygame.image.load(f'assets/Player_Sprites/Explode/a{i}.png').convert_alpha()
+        scale = player_height / sprite.get_height()
+        new_width = sprite.get_width() * scale
+        new_height = sprite.get_height() * scale
+        sprite = pygame.transform.scale(sprite, (new_width, new_height))
+        explode_sprite.append(sprite)
+        
+    all_sprites["explode_left"] = explode_sprite
+    all_sprites["explode_right"] = flipImg(explode_sprite)
+    
     return all_sprites
 
 def loadHealthSprites(width, height):
@@ -236,6 +261,9 @@ class Player(pygame.sprite.Sprite):
         
         self.score = 0
         
+        self.will_teleport = False
+        self.teleport_count = 0
+        
     def jump(self):
         multiplier = 6
         if self.jump_count == 1:
@@ -283,6 +311,12 @@ class Player(pygame.sprite.Sprite):
             if self.health <= 0:
                 pygame.quit()
                 quit()
+                
+        if self.will_teleport:
+            self.teleport_count += 1
+            
+        if self.teleport_count > fps // 2:
+            main(screen)
         
         self.fall_count += 1
         
@@ -310,6 +344,8 @@ class Player(pygame.sprite.Sprite):
         if self.health <= 0:
             sprite_sheet = "faint"
             self.invincibility = True
+        elif self.will_teleport:
+            sprite_sheet = "explode"
         elif self.hit:
             sprite_sheet = "dizzy"
         elif self.y_speed < 0:
@@ -324,6 +360,8 @@ class Player(pygame.sprite.Sprite):
         
         if sprite_sheet == "faint":
             index = (self.animation_count // 10) % len(sprites) # value for which the animation works (if it works, don't change it)
+        elif sprite_sheet == "explode":
+            index = (self.animation_count // 5) % len(sprites) # value for which the animation works (if it works, don't change it)
         else:
             index = (self.animation_count // self.LATENCY) % len(sprites)
         
@@ -409,6 +447,29 @@ class Spike(Object):
         self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
         self.mask = pygame.mask.from_surface(self.image)
         
+class Portal(Object):
+    LATENCY = 3
+    
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height, "portal")
+        self.sprites = loadPortal(width, height)
+        self.mask = pygame.mask.from_surface(self.image)
+        self.anim_count = 0
+
+    def loop(self):
+        
+        index = (self.anim_count // self.LATENCY) % len(self.sprites)
+        
+        self.image = self.sprites[index]
+        self.anim_count += 1
+        
+        self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
+        self.mask = pygame.mask.from_surface(self.image)
+        
+        if (self.anim_count // self.LATENCY) > len(self.sprites):
+            self.anim_count = 0
+        
+        
 class Collectible(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, name = None):
         super().__init__()
@@ -457,12 +518,15 @@ class Potion(Collectible):
     def loop(self):
         self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
         self.mask = pygame.mask.from_surface(self.image)
+        
 
 def handleVerticalCollision(player, objects, dy):
     collided_objects = []
     for obj in objects:
         if pygame.sprite.collide_mask(player, obj):
-            if dy > 0:
+            if obj.name == "portal":
+                player.will_teleport = True
+            elif dy > 0:
                 player.rect.bottom = obj.rect.top
                 player.landed()
             elif dy < 0:
@@ -481,6 +545,8 @@ def collide(player, objects, dx):
     for obj in objects:
         if pygame.sprite.collide_mask(player, obj):
             collided_object = obj
+            if obj.name == "portal":
+                player.will_teleport = True
             break
         
     player.move(-dx, 0)
@@ -587,8 +653,12 @@ def drawScreen(screen, level, player, objects, collectibles, offset_x):
     drawText(screen, f"Score = {player.score}", 16, (0, 0, 0), WIDTH - 180, 8)
     
     # draw game over text
-    if(player.health == 0):
+    if player.health == 0:
         drawText(screen, "Game Over!", 64, (0, 0, 0), WIDTH // 5, HEIGHT / 2.5)
+        
+    # draw level finished text
+    if player.will_teleport:
+        drawText(screen, "Level Finished!", 64, (0, 0, 0), 30, HEIGHT / 2.5)
     
     pygame.display.update()    
 
@@ -710,8 +780,11 @@ def main(screen):
     floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-WIDTH // block_size, WIDTH // block_size)]
     
     # generate traps 
-    traps = [Fire(100, HEIGHT - block_size - 64, 16, 32),
-            Spike(100-block_size-32, HEIGHT - block_size - 32, 16, 16)]   
+    traps = [
+            Fire(100, HEIGHT - block_size - 64, 16, 32),
+            Spike(100-block_size-32, HEIGHT - block_size - 32, 16, 16),
+            Portal(100+5*block_size, HEIGHT - block_size - 66, 33, 33)
+            ]   
     
     
     # generate collectibles
@@ -720,14 +793,15 @@ def main(screen):
         Carrot(100+2*block_size, HEIGHT - block_size - 64, 32, 32),
         Potion(100+3*block_size, HEIGHT - block_size - 76, 38, 38),
         Banana(100+4*block_size, HEIGHT - 2 * block_size - 64, 32, 32)
-    ]
+        ]
 
     
     # create objects list
     objects = [*floor,
             Block(0, HEIGHT - block_size * 2, block_size),
             Block(block_size * 3, HEIGHT - block_size * 4, block_size),
-            *traps]
+            *traps
+            ]
     
     # background scrolling variables
     offset_x = 0
@@ -765,6 +839,7 @@ def main(screen):
             if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
                 (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
                 offset_x += player.x_speed
+                
 
     pygame.quit()
     quit()
