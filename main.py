@@ -34,6 +34,24 @@ def loadCarrotCollectible(width, height):
     
     return pygame.transform.scale2x(carrot)
 
+def loadBananaCollectible(width, height):
+    banana = pygame.image.load(f'assets/Collectibles/Banana_Peeled.png').convert_alpha()
+    scale = height / banana.get_height()
+    new_width = banana.get_width() * scale
+    new_height = banana.get_height() * scale
+    banana = pygame.transform.scale(banana, (new_width, new_height))
+    
+    return pygame.transform.scale2x(banana)
+
+def loadHealthPotionCollectible(width, height):
+    potion = pygame.image.load(f'assets/Collectibles/Health_Potion.png').convert_alpha()
+    scale = height / potion.get_height()
+    new_width = potion.get_width() * scale
+    new_height = potion.get_height() * scale
+    potion = pygame.transform.scale(potion, (new_width, new_height))
+    
+    return pygame.transform.scale2x(potion)
+
 def loadFireSheet(width, height):
     path = join("assets", "Traps", "Fire")
     images = [f for f in listdir(path) if isfile(join(path, f))]
@@ -216,6 +234,8 @@ class Player(pygame.sprite.Sprite):
         self.invincibility = False
         self.health_anim = 0
         
+        self.score = 0
+        
     def jump(self):
         multiplier = 6
         if self.jump_count == 1:
@@ -289,6 +309,7 @@ class Player(pygame.sprite.Sprite):
         sprite_sheet = "idle"
         if self.health <= 0:
             sprite_sheet = "faint"
+            self.invincibility = True
         elif self.hit:
             sprite_sheet = "dizzy"
         elif self.y_speed < 0:
@@ -301,7 +322,10 @@ class Player(pygame.sprite.Sprite):
         sprite_sheet_name = sprite_sheet + "_" + self.direction
         sprites = self.SPRITES[sprite_sheet_name]
         
-        index = (self.animation_count // self.LATENCY) % len(sprites)
+        if sprite_sheet == "faint":
+            index = (self.animation_count // 10) % len(sprites) # value for which the animation works (if it works, don't change it)
+        else:
+            index = (self.animation_count // self.LATENCY) % len(sprites)
         
         self.sprite = sprites[index]
         self.animation_count += 1
@@ -353,7 +377,7 @@ class Fire(Object):
         self.image = self.fire["off"][0]
         self.mask = pygame.mask.from_surface(self.image)
         self.anim_count = 0
-        self.anim_name = "off"
+        self.anim_name = "on"
         
     def on(self):
         self.anim_name = "on"
@@ -385,12 +409,50 @@ class Spike(Object):
         self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
         self.mask = pygame.mask.from_surface(self.image)
         
-class Carrot(Object):
+class Collectible(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, name = None):
+        super().__init__()
+        
+        self.rect = pygame.Rect(x, y, width, height)
+        self.image = pygame.Surface((width, height), pygame.SRCALPHA)
+        self.width = width
+        self.height = height
+        self.name = name
+        
+        self.touched = 0
+
+        
+    def draw(self, disp, offset_x):
+        disp.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+
+        
+class Carrot(Collectible):
     def __init__(self, x, y, width, height):
         super().__init__(x, y, width, height, "carrot")
         
-        self.is_collected = False
         self.image = loadCarrotCollectible(width, height)
+        self.value = 1
+        
+    def loop(self):
+        self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
+        self.mask = pygame.mask.from_surface(self.image)
+
+class Banana(Collectible):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height, "banana")
+        
+        self.image = loadBananaCollectible(width, height)
+        self.value = 5
+        
+    def loop(self):
+        self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
+        self.mask = pygame.mask.from_surface(self.image)
+        
+class Potion(Collectible):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height, "potion")
+        
+        self.image = loadHealthPotionCollectible(width, height)
         
     def loop(self):
         self.rect = self.image.get_rect(topleft = (self.rect.x, self.rect.y))
@@ -426,7 +488,18 @@ def collide(player, objects, dx):
     
     return collided_object
 
-def handleMovement(player, objects):
+def handleCollectibles(player, collectibles):
+    collided_items = []
+    
+    for item in collectibles:
+        if pygame.sprite.collide_mask(player, item):
+            item.touched += 1
+            collided_items.append(item)
+    
+    return collided_items
+
+
+def handleMovement(player, objects, collectibles):
     keys = pygame.key.get_pressed()
     
     collide_left = collide(player, objects, -PLAYER_SPEED * 2)
@@ -451,6 +524,17 @@ def handleMovement(player, objects):
             player.getHit()
             player.health -= 1
             player.invincibility = True
+            
+    to_check = handleCollectibles(player, collectibles)
+    for obj in to_check:
+        if obj and obj.name == "potion" and obj.touched == 1:
+            if player.health < 3:
+                player.health += 1
+        elif obj and obj.touched == 1:
+            player.score += obj.value
+            
+        if obj.touched > 2:
+            obj.touched = 2
 
 
 # background function
@@ -476,7 +560,12 @@ def getBackground(level):
     
     return img
 
-def drawScreen(screen, level, player, objects, offset_x):
+def drawText(screen, text, size, color, x, y):
+    font = pygame.font.Font("assets/Fonts/pcsenior.ttf", size)
+    img = font.render(text, True, color)
+    screen.blit(img, (x, y))
+
+def drawScreen(screen, level, player, objects, collectibles, offset_x):
     # set BackGround    
     background_img = getBackground(1)
     background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
@@ -485,11 +574,31 @@ def drawScreen(screen, level, player, objects, offset_x):
     # draw objects
     for obj in objects:
         obj.draw(screen, offset_x)
+        
+    # draw collectibles
+    for obj in collectibles:
+        if obj.touched == 0:
+            obj.draw(screen, offset_x)
     
     # draw Player
     player.draw(screen, offset_x)
     
+    # draw Score
+    drawText(screen, f"Score = {player.score}", 16, (0, 0, 0), WIDTH - 180, 8)
+    
+    # draw game over text
+    if(player.health == 0):
+        drawText(screen, "Game Over!", 64, (0, 0, 0), WIDTH // 5, HEIGHT / 2.5)
+    
     pygame.display.update()    
+
+def loopTraps(traps):
+    for obj in traps:
+        obj.loop()
+        
+def loopCollectibles(items):
+    for obj in items:
+        obj.loop()
 
 # main function
 def main(screen):
@@ -502,23 +611,27 @@ def main(screen):
     # generate blocks
     block_size = 96 
     
-    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-WIDTH // block_size, WIDTH * 2 // block_size)]
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-WIDTH // block_size, WIDTH // block_size)]
     
-    # generate traps    
-    fire = Fire(100, HEIGHT - block_size - 64, 16, 32)
-    fire.on()
+    # generate traps 
+    traps = [Fire(100, HEIGHT - block_size - 64, 16, 32),
+            Spike(100-block_size-32, HEIGHT - block_size - 32, 16, 16)]   
     
-    spike = Spike(100-block_size-32, HEIGHT - block_size - 32, 16, 16)
     
     # generate collectibles
     
-    carrot = Carrot(100+2*block_size, HEIGHT - block_size - 64, 32, 32)
+    collectibles = [
+        Carrot(100+2*block_size, HEIGHT - block_size - 64, 32, 32),
+        Potion(100+3*block_size, HEIGHT - block_size - 76, 38, 38),
+        Banana(100+4*block_size, HEIGHT - 2 * block_size - 64, 32, 32)
+    ]
+
     
     # create objects list
     objects = [*floor,
-               Block(0, HEIGHT - block_size * 2, block_size),
-               Block(block_size * 3, HEIGHT - block_size * 4, block_size),
-            fire, spike, carrot]
+            Block(0, HEIGHT - block_size * 2, block_size),
+            Block(block_size * 3, HEIGHT - block_size * 4, block_size),
+            *traps]
     
     # background scrolling variables
     offset_x = 0
@@ -540,11 +653,10 @@ def main(screen):
                     player.jump()
                     
         player.loop(FPS)
-        fire.loop()
-        spike.loop()
-        carrot.loop()
-        handleMovement(player, objects)
-        drawScreen(screen, 1, player, objects, offset_x)
+        loopTraps(traps)
+        loopCollectibles(collectibles)
+        handleMovement(player, objects, collectibles)
+        drawScreen(screen, 1, player, objects, collectibles, offset_x)
         
         if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
             (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
