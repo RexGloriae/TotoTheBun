@@ -14,7 +14,7 @@ pygame.display.set_caption("Toto the Bun: the Great Carrot Adventure")
 WIDTH, HEIGHT = 1000, 800
 
 # in-game frames per second
-FPS = 60
+FPS = 120
 
 # speed at which the player moves on screen
 PLAYER_SPEED = 6
@@ -538,8 +538,7 @@ class Player(pygame.sprite.Sprite):
             self.hit_count = 0
             self.invincibility = False
             if self.health <= 0:
-                pygame.quit()
-                quit()
+                main(screen)
                 
         if self.will_teleport:
             self.teleport_count += 1
@@ -977,6 +976,7 @@ def getLevelButtons(screen, width, height):
     x3 = 4*x1
     x4 = 5.5*x1
     
+    
     x = [x1, x2, x3, x4]
     
     y1 = height - height // 2
@@ -997,10 +997,13 @@ def getLevelButtons(screen, width, height):
         if(index_x == 4):
             index_x = 0
             index_y = 1
-            
+    
+    
+    
     return buttons
 
-def waitForButtonSelection(buttons):
+def waitForLevelSelection(buttons):
+    back_rect = pygame.Rect(0, 0, 50, 50)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -1011,19 +1014,23 @@ def waitForButtonSelection(buttons):
                 for idx, button in enumerate(buttons):
                     if button.collidepoint(mouse_pos):
                         return idx + 1
+                if back_rect.collidepoint(mouse_pos):
+                    return 9
 
-def drawMenu(screen, width, height):
-    img = pygame.image.load("assets/Backgrounds/menu/menu.png")
+def drawPlayMenu(screen, width, height):
+    img = pygame.image.load("assets/Backgrounds/menu/play.png")
     img = pygame.transform.scale(img, (width, height))
     screen.blit(img, (0, 0))
     
     levels = loadLevelImgs(32, 32)
+    back_img = loadBackImg(50, 50)
     
     # button coordinates
     x1 = width // 7
     x2 = 2.5*x1
     x3 = 4*x1
     x4 = 5.5*x1
+    
     
     x = [x1, x2, x3, x4]
     
@@ -1039,23 +1046,145 @@ def drawMenu(screen, width, height):
         screen.blit(img, (x[index_x], y[index_y]))
         
         index_x += 1
-        if(index_x == 4):
+        if(index_x % 4 == 0):
             index_x = 0
             index_y = 1
             
+    screen.blit(back_img, (0, 0))
+            
     # drawing text
+    drawText(screen, "Toto the Bun:", 65, (0, 0, 0), WIDTH // 8 - 5, 20)
     drawText(screen, "Toto the Bun:", 64, (255, 255, 255), WIDTH // 8, 20)
     drawText(screen, "the Great Carrot Adventure", 36, (255, 255, 255), WIDTH // 18, 84)
+    drawText(screen, "Select a Level:", 25, (0, 0, 0), 25, HEIGHT // 2 - 24)
     drawText(screen, "Select a Level:", 24, (255, 255, 255), 25, HEIGHT // 2 - 24)
     
     pygame.display.flip()
 
+def play(screen, width, height):
+    buttons = getLevelButtons(screen, width, height)
+    drawPlayMenu(screen, width, height)
+    level = waitForLevelSelection(buttons)  
+    return level  
+
+def loadControlsButtons(width, height):
+    pass
+def getControlsButtons(screen, width, height):
+    pass
+def displayControls(screen, width, height):
+    pass
+def waitForControlsSelection(buttons):
+    pass
+def controls(screen, width, height):
+    buttons = getControlsButtons(screen, width, height)
+    displayControls(screen, width, height)
+    waitForControlsSelection(buttons)
+
+def loadMenuButtons(width, height):
+    buttons = []
+    for i in range(1, 4):
+        img = pygame.image.load(f'assets/Menu_Buttons/{i}.png').convert_alpha()
+        scale = height / img.get_height()
+        new_width = img.get_width() * scale
+        new_height = img.get_height() * scale
+        img = pygame.transform.scale(img, (new_width, new_height))
+        buttons.append(img)
+        
+    return buttons
+
+def getMenuButtons(screen, width, height):
+    # button coordinates
+    
+    x = width // 2 - 150
+    
+    y1 = height // 4
+    y2 = height // 2
+    y3 = height // 2 + height // 4
+    
+    buttons = []
+    
+    y = [y1, y2, y3]
+    for img in range(3):
+        button_rect = pygame.Rect(x, y[img], 300, 100)
+        buttons.append(button_rect)
+        
+    return buttons
+
+def drawMainMenu(screen, width, height):
+    img = pygame.image.load("assets/Backgrounds/menu/main.png")
+    img = pygame.transform.scale(img, (width, height))
+    screen.blit(img, (0, 0))
+    
+    buttons = loadMenuButtons(300, 100)
+    
+    # button coordinates
+    x = width // 2 - 150
+    
+    y1 = height // 4
+    y2 = height // 2
+    y3 = height // 2 + height // 4
+    
+    y = [y1, y2, y3]
+    
+    # drawing buttons
+    index = 0
+    for img in buttons:
+        screen.blit(img, (x, y[index]))
+        
+        index += 1
+        
+    # drawing text
+    drawText(screen, "Toto the Bun:", 65, (0, 0, 0), WIDTH // 8 - 5, 20)
+    drawText(screen, "Toto the Bun:", 64, (255, 255, 255), WIDTH // 8, 20)
+    drawText(screen, "the Great Carrot Adventure", 36, (255, 255, 255), WIDTH // 18, 84)
+    
+    pygame.display.flip()
+    
+def waitForMenuSelection(buttons):
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = event.pos
+                for idx, button in enumerate(buttons):
+                    if button.collidepoint(mouse_pos):
+                        return idx + 1
+
+def mainMenu(screen, width, height):
+    buttons = getMenuButtons(screen, width, height)
+    drawMainMenu(screen, width, height)
+    option = waitForMenuSelection(buttons)
+    
+    lvl = None
+    if option == 1:
+        lvl = play(screen, width, height)
+        if lvl == 9:
+            main(screen)
+    elif option == 2:
+        controls(screen, width, height)
+        main(screen)
+    elif option == 3:
+        pygame.quit()
+        quit()
+    return lvl
+
+def loadBackImg(width, height):
+    img = pygame.image.load("assets/Menu_Buttons/4.png").convert_alpha()
+    scale = height / img.get_height()
+    new_width = img.get_width() * scale
+    new_height = img.get_height() * scale
+    img = pygame.transform.scale(img, (new_width, new_height))
+    
+    return img
 
 # main function
 def main(screen):
-    buttons = getLevelButtons(screen, WIDTH, HEIGHT)
-    drawMenu(screen, WIDTH, HEIGHT)
-    level = waitForButtonSelection(buttons)
+
+    level = None
+    while not level:
+        level = mainMenu(screen, WIDTH, HEIGHT)
     
     clock = pygame.time.Clock()
         
