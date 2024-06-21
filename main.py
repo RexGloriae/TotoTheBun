@@ -226,6 +226,230 @@ def loadBlock(size):
     
     return pygame.transform.scale2x(surface)
 
+# load enemy sprites
+def loadEnemySprites(width, height, name):
+    all_sprites = {}
+    
+    path = None
+    if name == "demon":
+        path = "assets/Enemy/Demon/"
+    else:
+        path = "assets/Enemy/Slime/"
+        
+    # load attack sprites
+    attack_sprites = []
+    range_end = None
+    if name == "demon":
+        range_end = 9
+    else:
+        range_end = 6
+    for i in range(1, range_end):
+        sprite = pygame.image.load(path + f'attack/{i}.png').convert_alpha()
+        scale = height / sprite.get_height()
+        new_height = sprite.get_height() * scale
+        new_width = sprite.get_width() * scale
+        sprite = pygame.transform.scale(sprite, (new_width, new_height))
+        if name == "slime":
+            sprite = pygame.transform.scale2x(sprite)
+        sprite = pygame.transform.scale2x(sprite)
+        attack_sprites.append(sprite)
+        
+    all_sprites["attack_left"] = attack_sprites
+    all_sprites["attack_right"] = flipImg(attack_sprites)
+
+    # load death sprites
+    death_sprites = []
+    range_end = None
+    if name == "demon":
+        range_end = 8
+    else:
+        range_end = 5
+    for i in range(1, range_end):
+        sprite = pygame.image.load(path + f'death/{i}.png').convert_alpha()
+        scale = height / sprite.get_height()
+        new_width = scale * sprite.get_width()
+        new_height = scale * sprite.get_height()
+        sprite = pygame.transform.scale(sprite, (new_width, new_height))
+        if name == "slime":
+            sprite = pygame.transform.scale2x(sprite)
+        sprite = pygame.transform.scale2x(sprite)
+        death_sprites.append(sprite)
+        
+    all_sprites["death_left"] = death_sprites
+    all_sprites["death_right"] = flipImg(death_sprites)
+    
+    # load hurt sprites
+    hurt_sprites = []
+    range_end = 5
+    for i in range(1, range_end):
+        sprite = pygame.image.load(path + f'hurt/{i}.png').convert_alpha()
+        scale = height / sprite.get_height()
+        new_width = scale * sprite.get_width()
+        new_height = scale * sprite.get_height()
+        sprite = pygame.transform.scale(sprite, (new_width, new_height))
+        if name == "slime":
+            sprite = pygame.transform.scale2x(sprite)
+        sprite = pygame.transform.scale2x(sprite)
+        hurt_sprites.append(sprite)
+        
+    all_sprites["hurt_left"] = hurt_sprites
+    all_sprites["hurt_right"] = flipImg(hurt_sprites)
+    
+    # load move sprites
+    move_sprites = []
+    range_end = 5
+    for i in range(1, range_end):
+        sprite = pygame.image.load(path + f'move/{i}.png').convert_alpha()
+        scale = height / sprite.get_height()
+        new_width = scale * sprite.get_width()
+        new_height = scale * sprite.get_height()
+        sprite = pygame.transform.scale(sprite, (new_width, new_height))
+        if name == "slime":
+            sprite = pygame.transform.scale2x(sprite)
+        sprite = pygame.transform.scale2x(sprite)
+        move_sprites.append(sprite)
+        
+    all_sprites["move_left"] = move_sprites
+    all_sprites["move_right"] = flipImg(move_sprites)
+    
+    return all_sprites
+    
+# Enemy Class
+class Enemy(pygame.sprite.Sprite):
+    LATENCY = 3
+    
+    def __init__(self, x, y, width, height, dx, name = "None"):
+        super().__init__()
+        
+        self.SPRITES = loadEnemySprites(width, height, name)
+        
+        self.rect = pygame.Rect(x, y, width, height)
+        
+        self.name = name
+        
+        self.mask = None
+        
+        self.direction = "right"
+        self.animation_count = 0
+        self.speed = 3
+        self.movement_range = dx
+        self.distance_covered = 0
+        
+        self.hit = False
+        self.hit_count = 0
+        self.invincibility = False
+        
+        self.attacks = False
+        self.attack_count = 0
+        
+        
+        self.lives = True
+        
+        
+    def move(self, dx):
+        self.rect.x += dx
+        
+    def getHit(self):
+        self.hit = True
+        self.hit_count = 0
+        
+    def moveLeft(self, speed):
+        self.speed = -speed
+        if self.direction != "left":
+            self.direction = "left"
+            self.animation_count = 0
+            
+    def moveRight(self, speed):
+        self.speed = speed
+        if self.direction != "right":
+            self.direction = "right"
+            self.animation_count = 0
+
+    def loop(self, fps):
+        self.move(self.speed)
+        
+        self.distance_covered += abs(self.speed)
+        
+        if self.distance_covered >= self.movement_range:
+            self.speed = -self.speed
+            self.distance_covered = 0
+            if self.direction == "left":
+                self.direction = "right"
+            else:
+                self.direction = "left"
+        
+        if self.hit:
+            self.hit_count += 1
+        
+        if self.hit_count > fps // 2:
+            self.hit = False
+            self.hit_count = 0
+            self.invincibility = False
+            if self.health <= 0:
+                self.lives = False
+                
+        if self.attacks:
+            self.attack_count += 1
+            
+        if self.attack_count > fps // 2:
+            self.attacks = False
+            self.attack_count = 0
+            
+        self.updateSprite()
+        
+    def updateSprite(self):
+        sprite_sheet = "move"
+        if self.health <= 0:
+            sprite_sheet = "death"
+            self.invincibility = True
+        elif self.hit:
+            sprite_sheet = "hurt"
+        elif self.attacks:
+            sprite_sheet = "attack"
+            
+        sprite_sheet_name = sprite_sheet + "_" + self.direction
+        sprites = self.SPRITES[sprite_sheet_name]
+        
+        if sprite_sheet == "death":
+            index = (self.animation_count // 10) % len(sprites)
+        else:
+            index = (self.animation_count // self.LATENCY) % len(sprites)
+        
+        self.sprite = sprites[index]
+        self.animation_count += 1
+        
+        self.update()
+        
+    def update(self):
+        self.rect = self.sprite.get_rect(topleft = (self.rect.x, self.rect.y))
+        self.mask = pygame.mask.from_surface(self.sprite)
+        
+    def draw(self, disp, dx):
+        disp.blit(self.sprite, (self.rect.x - dx, self.rect.y))
+            
+# slime enemy
+class Slime(Enemy):
+    def __init__(self, x, y, width, height, dx):
+        super().__init__(x, y, width, height, dx, "slime")
+        
+        self.health = 1
+        self.points = 2
+        
+        self.distance = dx
+        
+
+
+class Demon(Enemy):
+    def __init__(self, x, y, width, height, dx):
+        super().__init__(x, y, width, height, dx, "demon")
+        
+        self.health = 3
+        self.points = 10
+        
+        self.distance = dx
+        
+
+
 # Player Class
 class Player(pygame.sprite.Sprite):
     COLOR=(255, 0, 0)
@@ -520,7 +744,7 @@ class Potion(Collectible):
         self.mask = pygame.mask.from_surface(self.image)
         
 
-def handleVerticalCollision(player, objects, dy):
+def handleVerticalCollision(player, objects, enemies, dy):
     collided_objects = []
     for obj in objects:
         if pygame.sprite.collide_mask(player, obj):
@@ -533,8 +757,42 @@ def handleVerticalCollision(player, objects, dy):
                 player.rect.top = obj.rect.bottom
                 player.hitHead()
             collided_objects.append(obj)
+    
+    enemy_hit = None
+    if dy > 0:
+        for ent in enemies:
+            if ent.lives and pygame.sprite.collide_mask(player, ent):
+                height_index = 1
+                if ent.name == "demon":
+                    height_index = 3
+                if player.rect.bottom <= ent.rect.top + ent.rect.height // height_index:
+                    player.rect.bottom = ent.rect.top
+                    player.landed()
+                    enemy_hit = ent
+                    break
         
-    return collided_objects
+    return collided_objects, enemy_hit
+
+def isEnemyHitting(player, enemies, dx):
+    player.move(dx, 0)
+    player.update()
+    
+    attacker = None
+    for ent in enemies:
+        if ent.lives and ent.invincibility == False:
+            if pygame.sprite.collide_mask(player, ent):
+                attacker = ent
+                ent.attacks = True
+                if ent.rect.x < player.rect.x:
+                    ent.direction = "right"
+                else:
+                    ent.direction = "left"
+                break
+    
+    player.move(-dx, 0)
+    player.update
+    
+    return attacker
 
 def collide(player, objects, dx):
     player.move(dx, 0)
@@ -565,11 +823,14 @@ def handleCollectibles(player, collectibles):
     return collided_items
 
 
-def handleMovement(player, objects, collectibles):
+def handleMovement(player, objects, collectibles, enemies):
     keys = pygame.key.get_pressed()
     
     collide_left = collide(player, objects, -PLAYER_SPEED * 2)
     collide_right = collide(player, objects, PLAYER_SPEED * 2)
+    
+    attacker_left = isEnemyHitting(player, enemies, -PLAYER_SPEED * 2)
+    attacker_right = isEnemyHitting(player, enemies, PLAYER_SPEED * 2)
     
     
     player.x_speed = 0
@@ -578,7 +839,7 @@ def handleMovement(player, objects, collectibles):
     if keys[pygame.K_d] and not collide_right:
         player.moveRight(PLAYER_SPEED)
         
-    vertical_collide = handleVerticalCollision(player, objects, player.y_speed)
+    vertical_collide, enemy_hit = handleVerticalCollision(player, objects, enemies, player.y_speed)
     to_check = [collide_left, collide_right, *vertical_collide]
     
     for obj in to_check:
@@ -587,6 +848,19 @@ def handleMovement(player, objects, collectibles):
             player.health -= 1
             player.invincibility = True
         elif obj and obj.name == "spike" and player.invincibility == False:
+            player.getHit()
+            player.health -= 1
+            player.invincibility = True
+    
+    if player.invincibility == False:
+        if enemy_hit:
+            if enemy_hit.invincibility == False:
+                enemy_hit.health -= 1
+                enemy_hit.getHit()
+                enemy_hit.invincibility = True
+                if enemy_hit.health <= 0:
+                    player.score += enemy_hit.points
+        elif attacker_left or attacker_right:
             player.getHit()
             player.health -= 1
             player.invincibility = True
@@ -631,7 +905,7 @@ def drawText(screen, text, size, color, x, y):
     img = font.render(text, True, color)
     screen.blit(img, (x, y))
 
-def drawScreen(screen, level, player, objects, collectibles, offset_x):
+def drawScreen(screen, level, player, objects, collectibles, enemies, offset_x):
     # set BackGround    
     background_img = getBackground(level)
     background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
@@ -648,6 +922,11 @@ def drawScreen(screen, level, player, objects, collectibles, offset_x):
     
     # draw Player
     player.draw(screen, offset_x)
+    
+    # draw enemies
+    for entity in enemies:
+        if entity.lives:
+            entity.draw(screen, offset_x)
     
     # draw Score
     drawText(screen, f"Score = {player.score}", 16, (0, 0, 0), WIDTH - 180, 8)
@@ -669,6 +948,10 @@ def loopTraps(traps):
 def loopCollectibles(items):
     for obj in items:
         obj.loop()
+        
+def loopEnemies(enemies, fps):
+    for enemy in enemies:
+        enemy.loop(fps)
 
 def loadLevelImgs(width, height):
     images = []
@@ -777,7 +1060,7 @@ def main(screen):
     # generate blocks
     block_size = 96 
     
-    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-WIDTH // block_size, WIDTH // block_size)]
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-WIDTH * 2// block_size, WIDTH * 3 // block_size)]
     
     # generate traps 
     traps = [
@@ -802,6 +1085,12 @@ def main(screen):
             Block(block_size * 3, HEIGHT - block_size * 4, block_size),
             *traps
             ]
+    
+    # create enemy list
+    enemies = [
+        Slime(WIDTH, HEIGHT - block_size - 100, 32, 25, block_size * 3),
+        Demon(0 - 5*block_size, HEIGHT - block_size - 142, 81, 71, block_size * 4)
+    ]
     
     # background scrolling variables
     offset_x = 0
@@ -833,8 +1122,9 @@ def main(screen):
             player.loop(FPS)
             loopTraps(traps)
             loopCollectibles(collectibles)
-            handleMovement(player, objects, collectibles)
-            drawScreen(screen, level, player, objects, collectibles, offset_x)
+            loopEnemies(enemies, FPS)
+            handleMovement(player, objects, collectibles, enemies)
+            drawScreen(screen, level, player, objects, collectibles, enemies, offset_x)
 
             if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
                 (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
