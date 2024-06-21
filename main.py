@@ -366,17 +366,18 @@ class Enemy(pygame.sprite.Sprite):
             self.animation_count = 0
 
     def loop(self, fps):
-        self.move(self.speed)
-        
-        self.distance_covered += abs(self.speed)
-        
-        if self.distance_covered >= self.movement_range:
-            self.speed = -self.speed
-            self.distance_covered = 0
-            if self.direction == "left":
-                self.direction = "right"
-            else:
-                self.direction = "left"
+        if self.hit == False and self.attacks == False:
+            self.move(self.speed)
+
+            self.distance_covered += abs(self.speed)
+
+            if self.distance_covered >= self.movement_range:
+                self.speed = -self.speed
+                self.distance_covered = 0
+                if self.direction == "left":
+                    self.direction = "right"
+                else:
+                    self.direction = "left"
         
         if self.hit:
             self.hit_count += 1
@@ -394,6 +395,10 @@ class Enemy(pygame.sprite.Sprite):
         if self.attack_count > fps // 2:
             self.attacks = False
             self.attack_count = 0
+            if self.speed > 0:
+                self.direction = "right"
+            else:
+                self.direction = "left"
             
         self.updateSprite()
         
