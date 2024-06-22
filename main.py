@@ -8,13 +8,14 @@ from os.path import isfile, join
 
 # init pygame and set title
 pygame.init()
+pygame.mixer.init()
 pygame.display.set_caption("Toto the Bun: the Great Carrot Adventure")
 
 # screen dimensions
 WIDTH, HEIGHT = 1000, 800
 
 # in-game frames per second
-FPS = 120
+FPS = 60
 
 # speed at which the player moves on screen
 PLAYER_SPEED = 6
@@ -24,6 +25,38 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 def flipImg(sprites):
     return [pygame.transform.flip(sprite, True, False) for sprite in sprites]
+
+def loadSoundEffects():
+    all_sounds = {}
+    
+    banana = pygame.mixer.Sound("assets/Sounds/Effects/banana.wav")
+    all_sounds["banana"] = banana
+    
+    carrot = pygame.mixer.Sound("assets/Sounds/Effects/carrot.wav")
+    all_sounds["carrot"] = carrot
+    
+    demon_death = pygame.mixer.Sound("assets/Sounds/Effects/demon_death.wav")
+    all_sounds["demon_death"] = demon_death
+    
+    enemy_hit = pygame.mixer.Sound("assets/Sounds/Effects/enemy_hit.wav")
+    all_sounds["enemy_hit"] = enemy_hit
+    
+    health = pygame.mixer.Sound("assets/Sounds/Effects/health_potion.wav")
+    all_sounds["health_potion"] = health
+    
+    lvl = pygame.mixer.Sound("assets/Sounds/Effects/level_finish.wav")
+    all_sounds["level_finish"] = lvl
+    
+    death = pygame.mixer.Sound("assets/Sounds/Effects/player_death.wav")
+    all_sounds["player_death"] = death
+    
+    hit = pygame.mixer.Sound("assets/Sounds/Effects/player_hit.flac")
+    all_sounds["player_hit"] = hit
+    
+    slime = pygame.mixer.Sound("assets/Sounds/Effects/slime_death.wav")
+    all_sounds["slime_death"] = slime
+    
+    return all_sounds
 
 def loadCarrotCollectible(width, height):
     carrot = pygame.image.load(f'assets/Collectibles/Carrot.png').convert_alpha()
@@ -827,7 +860,7 @@ def handleCollectibles(player, collectibles):
     return collided_items
 
 
-def handleMovement(player, objects, collectibles, enemies):
+def handleMovement(player, objects, collectibles, enemies, sounds):
     keys = pygame.key.get_pressed()
     
     collide_left = collide(player, objects, -PLAYER_SPEED * 2)
@@ -838,10 +871,11 @@ def handleMovement(player, objects, collectibles, enemies):
     
     
     player.x_speed = 0
-    if keys[pygame.K_a] and not collide_left:
-        player.moveLeft(PLAYER_SPEED)
-    if keys[pygame.K_d] and not collide_right:
-        player.moveRight(PLAYER_SPEED)
+    if player.health > 0:
+        if keys[pygame.K_a] and not collide_left:
+            player.moveLeft(PLAYER_SPEED)
+        if keys[pygame.K_d] and not collide_right:
+            player.moveRight(PLAYER_SPEED)
         
     vertical_collide, enemy_hit = handleVerticalCollision(player, objects, enemies, player.y_speed)
     to_check = [collide_left, collide_right, *vertical_collide]
@@ -851,10 +885,22 @@ def handleMovement(player, objects, collectibles, enemies):
             player.getHit()
             player.health -= 1
             player.invincibility = True
+            curr_sound = sounds["player_hit"]
+            if player.health == 0:
+                curr_sound = sounds["player_death"]
+            curr_sound.play()
         elif obj and obj.name == "spike" and player.invincibility == False:
             player.getHit()
             player.health -= 1
             player.invincibility = True
+            curr_sound = sounds["player_hit"]
+            if player.health == 0:
+                curr_sound = sounds["player_death"]
+            curr_sound.play()
+        elif obj and obj.name == "portal":
+            curr_sound = sounds["level_finish"]
+            curr_sound.set_volume(0.5)
+            curr_sound.play()
     
     if player.invincibility == False:
         if enemy_hit:
@@ -862,20 +908,36 @@ def handleMovement(player, objects, collectibles, enemies):
                 enemy_hit.health -= 1
                 enemy_hit.getHit()
                 enemy_hit.invincibility = True
+                curr_sound = sounds["enemy_hit"]
                 if enemy_hit.health <= 0:
                     player.score += enemy_hit.points
+                    curr_sound = sounds[enemy_hit.name + "_death"]
+                curr_sound.play()
         elif attacker_left or attacker_right:
             player.getHit()
             player.health -= 1
             player.invincibility = True
+            curr_sound = sounds["player_hit"]
+            if player.health == 0:
+                curr_sound = sounds["player_death"]
+            curr_sound.play()
             
     to_check = handleCollectibles(player, collectibles)
     for obj in to_check:
         if obj and obj.name == "potion" and obj.touched == 1:
             if player.health < 3:
                 player.health += 1
+                curr_sound = sounds["health_potion"]
+                curr_sound.play()
+            else:
+                obj.touched = 0
         elif obj and obj.touched == 1:
             player.score += obj.value
+            if obj.name == "carrot":
+                curr_sound = sounds["carrot"]
+            else:
+                curr_sound = sounds["banana"]
+            curr_sound.play()
             
         if obj.touched > 2:
             obj.touched = 2
@@ -906,8 +968,8 @@ def getBackground(level):
 
 def drawText(screen, text, size, color, x, y):
     font = pygame.font.Font("assets/Fonts/pcsenior.ttf", size)
-    img = font.render(text, True, color)
-    screen.blit(img, (x, y))
+    text = font.render(text, True, color)
+    screen.blit(text, (x, y))
 
 def drawScreen(screen, level, player, objects, collectibles, enemies, offset_x):
     # set BackGround    
@@ -1007,6 +1069,7 @@ def waitForLevelSelection(buttons):
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                pygame.mixer.stop()
                 pygame.quit()
                 quit()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -1055,9 +1118,10 @@ def drawPlayMenu(screen, width, height):
     # drawing text
     drawText(screen, "Toto the Bun:", 65, (0, 0, 0), WIDTH // 8 - 5, 20)
     drawText(screen, "Toto the Bun:", 64, (255, 255, 255), WIDTH // 8, 20)
+    drawText(screen, "the Great Carrot Adventure", 36, (0, 0, 0), WIDTH // 18, 80)
     drawText(screen, "the Great Carrot Adventure", 36, (255, 255, 255), WIDTH // 18, 84)
-    drawText(screen, "Select a Level:", 25, (0, 0, 0), 25, HEIGHT // 2 - 24)
-    drawText(screen, "Select a Level:", 24, (255, 255, 255), 25, HEIGHT // 2 - 24)
+    drawText(screen, "Select a Level:", 25, (0, 0, 0), 25, HEIGHT // 2 - 20)
+    drawText(screen, "Select a Level:", 25, (255, 255, 255), 25, HEIGHT // 2 - 23)
     
     pygame.display.flip()
 
@@ -1067,18 +1131,128 @@ def play(screen, width, height):
     level = waitForLevelSelection(buttons)  
     return level  
 
-def loadControlsButtons(width, height):
-    pass
-def getControlsButtons(screen, width, height):
-    pass
 def displayControls(screen, width, height):
-    pass
-def waitForControlsSelection(buttons):
-    pass
+    img = pygame.image.load("assets/Backgrounds/menu/controls.png")
+    img = pygame.transform.scale(img, (width, height))
+    screen.blit(img, (0, 0))
+    
+    back_img = loadBackImg(50, 50)
+    screen.blit(back_img, (0, 0))
+    
+    drawText(screen, "Toto the Bun:", 65, (0, 0, 0), WIDTH // 8 - 5, 20)
+    drawText(screen, "Toto the Bun:", 64, (255, 255, 255), WIDTH // 8, 20)
+    drawText(screen, "the Great Carrot Adventure", 36, (0, 0, 0), WIDTH // 18, 80)
+    drawText(screen, "the Great Carrot Adventure", 36, (255, 255, 255), WIDTH // 18, 84)
+    
+    curr_height = 84 + 36 + 36
+    drawText(screen, "Controls:", 20, (0, 0, 0), 15, curr_height - 4)
+    drawText(screen, "Controls:", 20, (255, 255, 255), 15, curr_height)
+    
+    curr_height += 20 + 15
+    drawText(screen, "Jump: W (x2 W for double jumping)", 16, (0, 0, 0), 10, curr_height - 2.5)
+    drawText(screen, "Jump: W (x2 W for double jumping)", 16, (255, 255, 255), 10, curr_height)
+    
+    curr_height += 16 + 15
+    drawText(screen, "Move Left: A", 16, (0, 0, 0), 10, curr_height - 2.5)
+    drawText(screen, "Move Left: A", 16, (255, 255, 255), 10, curr_height)
+    
+    curr_height += 16 + 15
+    drawText(screen, "Move Right: D", 16, (0, 0, 0), 10, curr_height - 2.5)
+    drawText(screen, "Move Right: D", 16, (255, 255, 255), 10, curr_height)
+    
+    curr_height += 16 + 15
+    drawText(screen, "Pause: SPACE", 16, (0, 0, 0), 10, curr_height - 2.5)
+    drawText(screen, "Pause: SPACE", 16, (255, 255, 255), 10, curr_height)
+    
+    curr_height += 16 + 15
+    drawText(screen, "Exit to Menu: ESC", 16, (0, 0, 0), 10, curr_height - 2.5)
+    drawText(screen, "Exit to Menu: ESC", 16, (255, 255, 255), 10, curr_height)
+    
+    
+    
+    curr_height += 16 + 45
+    drawText(screen, "Gameplay:", 20, (0, 0, 0), 15, curr_height)
+    drawText(screen, "Gameplay:", 20, (0, 0, 0), 15, curr_height - 8)
+    drawText(screen, "Gameplay:", 20, (255, 255, 255), 15, curr_height - 4)
+    
+    curr_height += 20 + 15
+    text = "You are a bunny called Toto who is captive somewhere in the"
+    drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
+    drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
+    
+    curr_height += 16 + 15
+    text = "multiverse. Your goal is go search for the portal on every"
+    drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
+    drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
+
+    text = "level that will get you home. On every level you have"
+    curr_height += 16 + 15
+    drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
+    drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
+    
+    text = "different items such as carrots and bananas. Collecting them"
+    curr_height += 16 + 15
+    drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
+    drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
+    
+    text = "will increase your score. Try collecting them all! Also, you"
+    curr_height += 16 + 15
+    drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
+    drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
+    
+    text = "can find health potions. They increase your health, but no"
+    curr_height += 16 + 15
+    drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
+    drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
+    
+    text = "more than three lives! On every level, there are various"
+    curr_height += 16 + 15
+    drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
+    drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
+    
+    text = "dangers such as traps and mobs that can hurt you! Try"
+    curr_height += 16 + 15
+    drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
+    drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
+    
+    text = "avoiding them! You can hit a mob by jumping on his head!"
+    curr_height += 16 + 15
+    drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
+    drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
+    
+    text = "Be careful, on each level there are mobs that are harder"
+    curr_height += 16 + 15
+    drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
+    drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
+    
+    text = "to kill. Killing a mob will also increase your score!"
+    curr_height += 16 + 15
+    drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
+    drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
+    
+    text = "With all that being said, HAVE FUN PLAYING!"
+    curr_height += 16 + 15
+    drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
+    drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
+
+    pygame.display.flip()
+    
+def waitForControlsSelection():
+    back_rect = pygame.Rect(0, 0, 50, 50)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.mixer.stop()
+                pygame.quit()
+                quit()
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = event.pos
+                if back_rect.collidepoint(mouse_pos):
+                    return None
+
 def controls(screen, width, height):
-    buttons = getControlsButtons(screen, width, height)
     displayControls(screen, width, height)
-    waitForControlsSelection(buttons)
+    return waitForControlsSelection()
 
 def loadMenuButtons(width, height):
     buttons = []
@@ -1136,6 +1310,7 @@ def drawMainMenu(screen, width, height):
     # drawing text
     drawText(screen, "Toto the Bun:", 65, (0, 0, 0), WIDTH // 8 - 5, 20)
     drawText(screen, "Toto the Bun:", 64, (255, 255, 255), WIDTH // 8, 20)
+    drawText(screen, "the Great Carrot Adventure", 36, (0, 0, 0), WIDTH // 18, 80)
     drawText(screen, "the Great Carrot Adventure", 36, (255, 255, 255), WIDTH // 18, 84)
     
     pygame.display.flip()
@@ -1144,6 +1319,7 @@ def waitForMenuSelection(buttons):
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                pygame.mixer.stop()
                 pygame.quit()
                 quit()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -1161,13 +1337,14 @@ def mainMenu(screen, width, height):
     if option == 1:
         lvl = play(screen, width, height)
         if lvl == 9:
-            main(screen)
+            lvl = None
     elif option == 2:
         controls(screen, width, height)
-        main(screen)
     elif option == 3:
+        pygame.mixer.stop()
         pygame.quit()
         quit()
+        
     return lvl
 
 def loadBackImg(width, height):
@@ -1179,13 +1356,28 @@ def loadBackImg(width, height):
     
     return img
 
+def getLevelMusic(level):
+    music = pygame.mixer.Sound(f'assets/Sounds/Music/lv{level}.wav')
+    return music
+
 # main function
 def main(screen):
-
     level = None
+    
+    pygame.mixer.stop()
+    music = pygame.mixer.Sound("assets/Sounds/Music/menu.wav")
+    music.play(-1)
+    music.set_volume(0.5)
+    
     while not level:
         level = mainMenu(screen, WIDTH, HEIGHT)
+
+    music.stop()
     
+    music = getLevelMusic(level)
+    music.play(-1)
+    music.set_volume(0.5)
+        
     clock = pygame.time.Clock()
         
     # generate Player
@@ -1226,6 +1418,9 @@ def main(screen):
         Demon(0 - 5*block_size, HEIGHT - block_size - 142, 81, 71, block_size * 4)
     ]
     
+    # load sounds
+    sounds = loadSoundEffects()
+    
     # background scrolling variables
     offset_x = 0
     scrolling_area_width = 200
@@ -1241,15 +1436,18 @@ def main(screen):
                 run = False
                 break
             
+            
             # manage game pausing
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     IS_PAUSED = not IS_PAUSED
                     if IS_PAUSED:
-                        drawText(screen, "Game Paused!", 64, (0, 0, 0), WIDTH // 6, HEIGHT / 2.5)
+                        drawText(screen, "Game Paused!", 64, (0, 0, 0), WIDTH // 7, HEIGHT / 2.5)
                         pygame.display.flip()
+                elif event.key == pygame.K_ESCAPE:
+                    main(screen)
                 
-                if not IS_PAUSED:
+                if not IS_PAUSED and player.health > 0:
                     if event.key == pygame.K_w and player.jump_count < 2:
                         player.jump()
         if not IS_PAUSED:
@@ -1257,7 +1455,7 @@ def main(screen):
             loopTraps(traps)
             loopCollectibles(collectibles)
             loopEnemies(enemies, FPS)
-            handleMovement(player, objects, collectibles, enemies)
+            handleMovement(player, objects, collectibles, enemies, sounds)
             drawScreen(screen, level, player, objects, collectibles, enemies, offset_x)
 
             if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
