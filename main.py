@@ -508,7 +508,7 @@ class Player(pygame.sprite.Sprite):
         
         self.mask = None
         
-        self.direction = "left"
+        self.direction = "right"
         self.animation_count = 0
         
         self.fall_count = 0
@@ -1360,6 +1360,107 @@ def getLevelMusic(level):
     music = pygame.mixer.Sound(f'assets/Sounds/Music/lv{level}.wav')
     return music
 
+def levelOne():
+    block_size = 96
+    
+    carrot_width = 32
+    carrot_height = 32
+    banana_width = 32
+    banana_height = 32
+    potion_width = 38
+    potion_height = 38
+    
+    fire_width = 16
+    fire_height = 32
+    spike_width = 16
+    spike_height = 16
+    portal_width = 33
+    portal_height = 33
+    
+    slime_width = 32
+    slime_height = 25 # magnified 4 times
+    demon_width = 81
+    demon_height = 71
+    
+    # all others - magnified twice
+    
+    
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, WIDTH * 3 // block_size)]
+    wall_left = [Block(0, HEIGHT - i * block_size, block_size) for i in range(1, HEIGHT // block_size)]
+    
+    # generate traps 
+    traps = [
+            *(Spike((4 + i) * block_size, HEIGHT - block_size - spike_height * 2, spike_width, spike_height) for i in range(3)),
+            *(Spike((4 + i) * block_size + spike_width * 2, HEIGHT - block_size - spike_height * 2, spike_width, spike_height) for i in range(3)),
+            *(Spike((4 + i) * block_size + spike_width * 4, HEIGHT - block_size - spike_height * 2, spike_width, spike_height) for i in range(3)),
+            Fire(13 * block_size + 2 * fire_width, HEIGHT - block_size - 2 * fire_height, fire_width, fire_height)
+            ]   
+    
+    
+    # generate collectibles
+    
+    collectibles = [
+        Carrot(2 * block_size, HEIGHT - block_size - carrot_height * 2, carrot_width, carrot_height),
+        *(Carrot((3 + i) * block_size, HEIGHT - 3 * block_size - 2 * carrot_height, carrot_width, carrot_height) for i in range(1, 5, 2)),
+        Potion(18 * block_size, HEIGHT - block_size - 2 * potion_height, potion_width, potion_height)
+        ]
+
+    # create objects list
+    objects = [*floor,
+               *traps,
+               *wall_left,
+               *(Block((3 + i) * block_size, HEIGHT - 3 * block_size, block_size) for i in range(5)),
+               *(Block((16 + i) * block_size, HEIGHT - 3 * block_size, block_size) for i in range(5)),
+               Block(14 * block_size, HEIGHT - block_size, block_size)
+            ]
+    
+    # create enemy list
+    enemies = [
+        Slime(8 * block_size, HEIGHT - block_size - 4 * slime_height, slime_width, slime_height, 4 * block_size),
+        Slime(5 * block_size, HEIGHT - 3 * block_size - 4 * slime_height, slime_width, slime_height, 2 * block_size)
+    ]
+    
+    return objects, traps, collectibles, enemies
+
+def levelTwo():
+    pass
+
+def levelThree():
+    pass
+
+def levelFour():
+    pass
+
+def levelFive():
+    pass
+
+def levelSix():
+    pass
+
+def levelSeven():
+    pass
+
+def levelEight():
+    pass
+
+def loadLevel(level):
+    if level == 1:
+        return levelOne()
+    elif level == 2:
+        return levelTwo()
+    elif level == 3:
+        return levelThree()
+    elif level == 4:
+        return levelFour()
+    elif level == 5:
+        return levelFive()
+    elif level == 6:
+        return levelSix()
+    elif level == 7:
+        return levelSeven()
+    elif level == 8:
+        return levelEight()
+
 # main function
 def main(screen):
     level = None
@@ -1381,42 +1482,12 @@ def main(screen):
     clock = pygame.time.Clock()
         
     # generate Player
-    player = Player(100, 100, 50, 50)
+    player = Player(100, HEIGHT - 96 - 50, 50, 50)
     
-    # generate blocks
+    # load level map
     block_size = 96 
     
-    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-WIDTH * 2// block_size, WIDTH * 3 // block_size)]
-    
-    # generate traps 
-    traps = [
-            Fire(100, HEIGHT - block_size - 64, 16, 32),
-            Spike(100-block_size-32, HEIGHT - block_size - 32, 16, 16),
-            Portal(100+5*block_size, HEIGHT - block_size - 66, 33, 33)
-            ]   
-    
-    
-    # generate collectibles
-    
-    collectibles = [
-        Carrot(100+2*block_size, HEIGHT - block_size - 64, 32, 32),
-        Potion(100+3*block_size, HEIGHT - block_size - 76, 38, 38),
-        Banana(100+4*block_size, HEIGHT - 2 * block_size - 64, 32, 32)
-        ]
-
-    
-    # create objects list
-    objects = [*floor,
-            Block(0, HEIGHT - block_size * 2, block_size),
-            Block(block_size * 3, HEIGHT - block_size * 4, block_size),
-            *traps
-            ]
-    
-    # create enemy list
-    enemies = [
-        Slime(WIDTH, HEIGHT - block_size - 100, 32, 25, block_size * 3),
-        Demon(0 - 5*block_size, HEIGHT - block_size - 142, 81, 71, block_size * 4)
-    ]
+    objects, traps, collectibles, enemies = loadLevel(level)
     
     # load sounds
     sounds = loadSoundEffects()
