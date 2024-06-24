@@ -6,35 +6,13 @@ from object_class import Block, Fire, Spike, Portal
 from enemy_class import Slime, Demon
 from collectible_class import Carrot, Banana, Potion
 
+from assets_dim import *
+
 def getLevelMusic(level):
     music = pygame.mixer.Sound(f'assets/Sounds/Music/lv{level}.wav')
     return music
 
-def levelOne():
-    block_size = 96
-    
-    carrot_width = 32
-    carrot_height = 32
-    banana_width = 32
-    banana_height = 32
-    potion_width = 38
-    potion_height = 38
-    
-    fire_width = 16
-    fire_height = 32
-    spike_width = 16
-    spike_height = 16
-    portal_width = 33 * 2
-    portal_height = 33 * 2
-    
-    slime_width = 32
-    slime_height = 25 # magnified 4 times
-    demon_width = 81
-    demon_height = 71
-    
-    # all others - magnified twice
-    
-    
+def levelOne(): 
     floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, WIDTH * 3 // block_size)]
     wall_left = [Block(0, HEIGHT - i * block_size, block_size) for i in range(1, HEIGHT // block_size)]
     
@@ -85,30 +63,6 @@ def levelOne():
     return objects, traps, collectibles, enemies
 
 def levelTwo():
-    block_size = 96
-    
-    carrot_width = 32
-    carrot_height = 32
-    banana_width = 32
-    banana_height = 32
-    potion_width = 38
-    potion_height = 38
-    
-    fire_width = 16
-    fire_height = 32
-    spike_width = 16
-    spike_height = 16
-    portal_width = 33 * 2
-    portal_height = 33 * 2
-    
-    slime_width = 32
-    slime_height = 25 # magnified 4 times
-    demon_width = 81
-    demon_height = 71
-    
-    # all others - magnified twice
-    
-    
     floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-2 * block_size // block_size, 8)]
     wall_left = [Block(-2 * block_size, HEIGHT - i * block_size, block_size) for i in range(1, 2 * HEIGHT // block_size)]
     
