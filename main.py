@@ -12,6 +12,8 @@ from loaders import loadSoundEffects
 from screen import drawScreen, drawText
 from events import handleMovement, handleEnemies, handleCollectibles
 
+
+
 def loopTraps(traps):
     for obj in traps:
         obj.loop()
@@ -61,7 +63,8 @@ def main(screen):
     scrolling_area_width = 200
     
     offset_y = 0
-    top_height = HEIGHT - 300
+    top_height = 300
+    bottom_height = 300
     scrolling_height = HEIGHT
     
     # check if game is paused
@@ -103,14 +106,18 @@ def main(screen):
             if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
                 (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
                 offset_x += player.x_speed
+            
                 
-            if ((player.rect.top - offset_y <= scrolling_height - top_height) and player.y_speed < 0) or (
-                (player.rect.bottom - offset_y >= scrolling_height - (abs(offset_y) + 2 * block_size)) and player.y_speed > 0.5):
-                offset_y += player.y_speed
-                
-            scrolling_height = HEIGHT - offset_y
-            top_height = scrolling_height - 300
-                
+            if scrolling_height > HEIGHT:
+                if ((player.rect.top - offset_y <= scrolling_height - 300) and player.y_speed < 0) or (
+                    (player.rect.bottom - offset_y >= scrolling_height - (abs(offset_y) + 2 * block_size)) and player.y_speed > 0.5):
+                    offset_y += player.y_speed
+                scrolling_height = HEIGHT - offset_y
+            else:
+                if ((player.rect.top - offset_y >= scrolling_height + 300) and player.y_speed < 0) or (
+                    (player.rect.bottom - offset_y <= scrolling_height + (abs(offset_y) + 2 * block_size)) and player.y_speed > 0.5):
+                    offset_y += player.y_speed
+                scrolling_height = HEIGHT + offset_y
 
     pygame.quit()
     quit()
