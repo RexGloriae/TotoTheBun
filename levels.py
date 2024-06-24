@@ -117,22 +117,177 @@ def levelTwo():
     return objects, traps, collectibles, enemies
 
 def levelThree():
-    pass
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(1, 5)]
+    wall_left = [Block(0, HEIGHT - i * block_size, block_size) for i in range(1, HEIGHT // block_size)]
+    
+    # generate traps 
+    traps = [
+            *(Spike(8 * block_size + i * spike_width, HEIGHT + 6 * block_size - 2 * spike_height, spike_width, spike_height) for i in range(0, 6, 2)),
+            *(Fire((11 + j) * block_size + i * fire_width, HEIGHT + 7 * block_size - 2 * fire_height, fire_width, fire_height) for j in range(2) for i in range(0, 6, 2)),
+            ]   
+    
+    
+    # generate collectibles
+    
+    collectibles = [
+        Carrot(4 * block_size, HEIGHT - block_size - carrot_height * 2, carrot_width, carrot_height),
+        Carrot(7 * block_size, HEIGHT + 6 * block_size - 2 * carrot_height, carrot_width, carrot_height),
+        Potion(17 * block_size, HEIGHT + 6 * block_size - 2 * potion_height, potion_width, potion_height),
+        Carrot(11 * block_size + 2 * carrot_width, HEIGHT + 6 * block_size - 3 * carrot_height, carrot_width, carrot_height),
+        ]
+
+    # create objects list
+    objects = [*floor,
+               *traps,
+               *wall_left,
+               *(Block(4 * block_size, HEIGHT + i * block_size, block_size) for i in range(6)),
+               *(Block((4 + i) * block_size, HEIGHT + 6 * block_size, block_size) for i in range(7)),
+               *(Block((10 + i) * block_size, HEIGHT + 7 * block_size, block_size) for i in range(4)),
+               *(Block((13 + i) * block_size, HEIGHT + 6 * block_size, block_size) for i in range(5)),
+            ]
+    
+    # create enemy list
+    enemies = [
+        Slime(9 * block_size, HEIGHT + 6 * block_size - 4 * slime_height, slime_width, slime_height, block_size),
+        Slime(14 * block_size, HEIGHT + 6 * block_size - 4 * slime_height, slime_width, slime_height, 2 * block_size),
+    ]
+    
+    return objects, traps, collectibles, enemies
 
 def levelFour():
-    pass
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, WIDTH * 3 // block_size)]
+    wall_left = [Block(0, HEIGHT - i * block_size, block_size) for i in range(1, HEIGHT // block_size)]
+    
+    # generate traps 
+    traps = [
+            
+            ]   
+    
+    
+    # generate collectibles
+    
+    collectibles = [
+        ]
+
+    # create objects list
+    objects = [*floor,
+               *traps,
+               *wall_left,
+            ]
+    
+    # create enemy list
+    enemies = [
+    ]
+    
+    return objects, traps, collectibles, enemies
 
 def levelFive():
-    pass
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, WIDTH * 3 // block_size)]
+    wall_left = [Block(0, HEIGHT - i * block_size, block_size) for i in range(1, HEIGHT // block_size)]
+    
+    # generate traps 
+    traps = [
+            
+            ]   
+    
+    
+    # generate collectibles
+    
+    collectibles = [
+        ]
+
+    # create objects list
+    objects = [*floor,
+               *traps,
+               *wall_left,
+            ]
+    
+    # create enemy list
+    enemies = [
+    ]
+    
+    return objects, traps, collectibles, enemies
 
 def levelSix():
-    pass
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, WIDTH * 3 // block_size)]
+    wall_left = [Block(0, HEIGHT - i * block_size, block_size) for i in range(1, HEIGHT // block_size)]
+    
+    # generate traps 
+    traps = [
+            
+            ]   
+    
+    
+    # generate collectibles
+    
+    collectibles = [
+        ]
+
+    # create objects list
+    objects = [*floor,
+               *traps,
+               *wall_left,
+            ]
+    
+    # create enemy list
+    enemies = [
+    ]
+    
+    return objects, traps, collectibles, enemies
 
 def levelSeven():
-    pass
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, WIDTH * 3 // block_size)]
+    wall_left = [Block(0, HEIGHT - i * block_size, block_size) for i in range(1, HEIGHT // block_size)]
+    
+    # generate traps 
+    traps = [
+            
+            ]   
+    
+    
+    # generate collectibles
+    
+    collectibles = [
+        ]
+
+    # create objects list
+    objects = [*floor,
+               *traps,
+               *wall_left,
+            ]
+    
+    # create enemy list
+    enemies = [
+    ]
+    
+    return objects, traps, collectibles, enemies
 
 def levelEight():
-    pass
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, WIDTH * 3 // block_size)]
+    wall_left = [Block(0, HEIGHT - i * block_size, block_size) for i in range(1, HEIGHT // block_size)]
+    
+    # generate traps 
+    traps = [
+            
+            ]   
+    
+    
+    # generate collectibles
+    
+    collectibles = [
+        ]
+
+    # create objects list
+    objects = [*floor,
+               *traps,
+               *wall_left,
+            ]
+    
+    # create enemy list
+    enemies = [
+    ]
+    
+    return objects, traps, collectibles, enemies
 
 def loadLevel(level):
     if level == 1:
