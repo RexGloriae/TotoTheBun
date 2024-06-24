@@ -18,7 +18,7 @@ WIDTH, HEIGHT = 1000, 800
 FPS = 60
 
 # speed at which the player moves on screen
-PLAYER_SPEED = 10
+PLAYER_SPEED = 7
 
 # game screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -527,9 +527,9 @@ class Player(pygame.sprite.Sprite):
         self.teleport_count = 0
         
     def jump(self):
-        multiplier = 6
+        multiplier = 7
         if self.jump_count == 1:
-            multiplier = 9
+            multiplier = 10
         
         self.y_speed = -self.GRAVITY * multiplier
         self.animation_count = 0
@@ -1471,6 +1471,8 @@ def levelTwo():
             *(Fire((2 + i) * block_size + 2 * j * fire_width, HEIGHT - block_size - 2 * fire_height, fire_width, fire_height) for i in range(2) for j in range(3)),
             *(Spike(6 * block_size + i * spike_width, HEIGHT - block_size - 2 * spike_height, spike_width, spike_height) for i in range(0, 6, 2)),
             Fire(10 * block_size + 2 * fire_width, HEIGHT - 4 * block_size - 2 * fire_height, fire_width, fire_height),
+            *(Spike(15 * block_size + i * spike_width, HEIGHT - 11 * block_size - 2 * spike_height, spike_width, spike_height) for i in range(0, 6, 2)),
+            Portal(13 * block_size, HEIGHT - 11 * block_size - 2 * portal_height, portal_width, portal_height)
             ]   
     
     
@@ -1500,6 +1502,8 @@ def levelTwo():
                *(Block(i * block_size, HEIGHT - (10 + i) * block_size, block_size) for i in range(3)),
                *(Block((3 + i) * block_size, HEIGHT - 13 * block_size, block_size) for i in range(6)),
                *(Block((12 + i) * block_size, HEIGHT - 15 * block_size, block_size) for i in range(5)),
+               *(Block((13 + i) * block_size, HEIGHT - 11 * block_size, block_size) for i in range(8)),
+               *(Block(21 * block_size, HEIGHT - (10 + i) * block_size, block_size) for i in range(10)),
             ]
     
     # create enemy list
@@ -1507,6 +1511,7 @@ def levelTwo():
         Slime(3 * block_size, HEIGHT - 13 * block_size - 4 * slime_height, slime_width, slime_height, 2 * block_size),
         Slime(6 * block_size, HEIGHT - 13 * block_size - 4 * slime_height, slime_width, slime_height, 2 * block_size),
         Slime(13 * block_size, HEIGHT - 15 * block_size - 4 * slime_height, slime_width, slime_height, 2 * block_size),
+        Demon(17 * block_size, HEIGHT - 11 * block_size - 2 * demon_height, demon_width, demon_height, 3 * block_size),
     ]
     
     return objects, traps, collectibles, enemies
