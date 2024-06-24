@@ -18,7 +18,7 @@ WIDTH, HEIGHT = 1000, 800
 FPS = 60
 
 # speed at which the player moves on screen
-PLAYER_SPEED = 6
+PLAYER_SPEED = 10
 
 # game screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -462,8 +462,8 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.sprite.get_rect(topleft = (self.rect.x, self.rect.y))
         self.mask = pygame.mask.from_surface(self.sprite)
         
-    def draw(self, disp, dx):
-        disp.blit(self.sprite, (self.rect.x - dx, self.rect.y))
+    def draw(self, disp, dx, dy):
+        disp.blit(self.sprite, (self.rect.x - dx, self.rect.y - dy))
             
 # slime enemy
 class Slime(Enemy):
@@ -641,8 +641,8 @@ class Player(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.sprite)
         
         
-    def draw(self, disp, offset_x):
-        disp.blit(self.sprite, (self.rect.x - offset_x, self.rect.y))
+    def draw(self, disp, offset_x, offset_y):
+        disp.blit(self.sprite, (self.rect.x - offset_x, self.rect.y - offset_y))
         self.displayHealth(disp)
 
 class Object(pygame.sprite.Sprite):
@@ -655,8 +655,8 @@ class Object(pygame.sprite.Sprite):
         self.height = height
         self.name = name
         
-    def draw(self, disp, offset_x):
-        disp.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+    def draw(self, disp, offset_x, offset_y):
+        disp.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
         
         
 class Block(Object):
@@ -744,8 +744,8 @@ class Collectible(pygame.sprite.Sprite):
         self.touched = 0
 
         
-    def draw(self, disp, offset_x):
-        disp.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+    def draw(self, disp, offset_x, offset_y):
+        disp.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 
         
 class Carrot(Collectible):
@@ -971,7 +971,7 @@ def drawText(screen, text, size, color, x, y):
     text = font.render(text, True, color)
     screen.blit(text, (x, y))
 
-def drawScreen(screen, level, player, objects, collectibles, enemies, offset_x):
+def drawScreen(screen, level, player, objects, collectibles, enemies, offset_x, offset_y):
     # set BackGround    
     background_img = getBackground(level)
     background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
@@ -979,20 +979,20 @@ def drawScreen(screen, level, player, objects, collectibles, enemies, offset_x):
     
     # draw objects
     for obj in objects:
-        obj.draw(screen, offset_x)
+        obj.draw(screen, offset_x, offset_y)
         
     # draw collectibles
     for obj in collectibles:
         if obj.touched == 0:
-            obj.draw(screen, offset_x)
+            obj.draw(screen, offset_x, offset_y)
     
     # draw Player
-    player.draw(screen, offset_x)
+    player.draw(screen, offset_x, offset_y)
     
     # draw enemies
     for entity in enemies:
         if entity.lives:
-            entity.draw(screen, offset_x)
+            entity.draw(screen, offset_x, offset_y)
     
     # draw Score
     drawText(screen, f"Score = {player.score}", 16, (0, 0, 0), WIDTH - 180, 8)
@@ -1374,8 +1374,8 @@ def levelOne():
     fire_height = 32
     spike_width = 16
     spike_height = 16
-    portal_width = 33
-    portal_height = 33
+    portal_width = 33 * 2
+    portal_height = 33 * 2
     
     slime_width = 32
     slime_height = 25 # magnified 4 times
@@ -1393,7 +1393,9 @@ def levelOne():
             *(Spike((4 + i) * block_size, HEIGHT - block_size - spike_height * 2, spike_width, spike_height) for i in range(3)),
             *(Spike((4 + i) * block_size + spike_width * 2, HEIGHT - block_size - spike_height * 2, spike_width, spike_height) for i in range(3)),
             *(Spike((4 + i) * block_size + spike_width * 4, HEIGHT - block_size - spike_height * 2, spike_width, spike_height) for i in range(3)),
-            Fire(13 * block_size + 2 * fire_width, HEIGHT - block_size - 2 * fire_height, fire_width, fire_height)
+            Fire(13 * block_size + 2 * fire_width, HEIGHT - block_size - 2 * fire_height, fire_width, fire_height),
+            *(Spike(27 * block_size + spike_width * i, HEIGHT - block_size - spike_width * 2, spike_width, spike_height) for i in range(0, 5, 2)),
+            Portal(35 * block_size, HEIGHT - 8 * block_size - 2 * portal_height, portal_width, portal_height),
             ]   
     
     
@@ -1402,7 +1404,9 @@ def levelOne():
     collectibles = [
         Carrot(2 * block_size, HEIGHT - block_size - carrot_height * 2, carrot_width, carrot_height),
         *(Carrot((3 + i) * block_size, HEIGHT - 3 * block_size - 2 * carrot_height, carrot_width, carrot_height) for i in range(1, 5, 2)),
-        Potion(18 * block_size, HEIGHT - block_size - 2 * potion_height, potion_width, potion_height)
+        Potion(18 * block_size, HEIGHT - block_size - 2 * potion_height, potion_width, potion_height),
+        Carrot(21 * block_size + carrot_width, HEIGHT - 2 * block_size - 2 * carrot_height, carrot_width, carrot_height),
+        Banana(25 * block_size + banana_width, HEIGHT - block_size - 2 * banana_height, banana_width, banana_height),
         ]
 
     # create objects list
@@ -1411,13 +1415,21 @@ def levelOne():
                *wall_left,
                *(Block((3 + i) * block_size, HEIGHT - 3 * block_size, block_size) for i in range(5)),
                *(Block((16 + i) * block_size, HEIGHT - 3 * block_size, block_size) for i in range(5)),
-               Block(14 * block_size, HEIGHT - block_size, block_size)
+               Block(14 * block_size, HEIGHT - 2 * block_size, block_size),
+               *(Block((23 + i) * block_size, HEIGHT - 4 * block_size, block_size) for i in range(4)),
+               *(Block(23 * block_size, HEIGHT - i * block_size, block_size) for i in range (2, 5)),
+               Block(28 * block_size, HEIGHT - 2 * block_size, block_size),
+               Block(28 * block_size, HEIGHT - 6 * block_size, block_size),
+               *(Block((30 + i) * block_size, HEIGHT - 8 * block_size, block_size) for i in range(6)),
+               *(Block(30 * block_size, HEIGHT - i * block_size, block_size) for i in range (2, 8)),
             ]
     
     # create enemy list
     enemies = [
+        Slime(5 * block_size, HEIGHT - 3 * block_size - 4 * slime_height, slime_width, slime_height, 2 * block_size),
         Slime(8 * block_size, HEIGHT - block_size - 4 * slime_height, slime_width, slime_height, 4 * block_size),
-        Slime(5 * block_size, HEIGHT - 3 * block_size - 4 * slime_height, slime_width, slime_height, 2 * block_size)
+        Slime(23 * block_size, HEIGHT - 4 * block_size - 4 * slime_height, slime_width, slime_height, 3 * block_size),
+        Demon(30 * block_size, HEIGHT - 8 * block_size - 2 * demon_height, demon_width, demon_height, 3 * block_size),
     ]
     
     return objects, traps, collectibles, enemies
@@ -1496,6 +1508,10 @@ def main(screen):
     offset_x = 0
     scrolling_area_width = 200
     
+    offset_y = 0
+    top_height = HEIGHT - 200
+    bottom_height = 400
+    
     # check if game is paused
     IS_PAUSED = False
     # game run loop
@@ -1527,11 +1543,16 @@ def main(screen):
             loopCollectibles(collectibles)
             loopEnemies(enemies, FPS)
             handleMovement(player, objects, collectibles, enemies, sounds)
-            drawScreen(screen, level, player, objects, collectibles, enemies, offset_x)
+            drawScreen(screen, level, player, objects, collectibles, enemies, offset_x, offset_y)
 
             if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
                 (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
                 offset_x += player.x_speed
+                
+            if ((player.rect.top - offset_y <= HEIGHT - top_height) and player.y_speed < 0) or (
+                (player.rect.bottom - offset_y >= HEIGHT - (abs(offset_y) + 50)) and player.y_speed > 0):
+                offset_y += player.y_speed
+            
                 
 
     pygame.quit()
