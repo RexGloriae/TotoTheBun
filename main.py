@@ -840,8 +840,6 @@ def collide(player, objects, dx):
     for obj in objects:
         if pygame.sprite.collide_mask(player, obj):
             collided_object = obj
-            if obj.name == "portal":
-                player.will_teleport = True
             break
         
     player.move(-dx, 0)
@@ -888,6 +886,7 @@ def handleMovement(player, objects, collectibles, enemies, sounds):
             curr_sound = sounds["player_hit"]
             if player.health == 0:
                 curr_sound = sounds["player_death"]
+                pygame.mixer.stop()
             curr_sound.play()
         elif obj and obj.name == "spike" and player.invincibility == False:
             player.getHit()
@@ -896,11 +895,15 @@ def handleMovement(player, objects, collectibles, enemies, sounds):
             curr_sound = sounds["player_hit"]
             if player.health == 0:
                 curr_sound = sounds["player_death"]
+                pygame.mixer.stop()
             curr_sound.play()
         elif obj and obj.name == "portal":
-            curr_sound = sounds["level_finish"]
-            curr_sound.set_volume(0.5)
-            curr_sound.play()
+            if player.will_teleport == False:
+                pygame.mixer.stop()
+                curr_sound = sounds["level_finish"]
+                curr_sound.set_volume(0.5)
+                curr_sound.play()
+                player.will_teleport = True
     
     if player.invincibility == False:
         if enemy_hit:
@@ -920,6 +923,7 @@ def handleMovement(player, objects, collectibles, enemies, sounds):
             curr_sound = sounds["player_hit"]
             if player.health == 0:
                 curr_sound = sounds["player_death"]
+                pygame.mixer.stop()
             curr_sound.play()
             
     to_check = handleCollectibles(player, collectibles)
@@ -1181,11 +1185,11 @@ def displayControls(screen, width, height):
     drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
     
     curr_height += 16 + 15
-    text = "multiverse. Your goal is go search for the portal on every"
+    text = "multiverse. Your goal is to go search on every for the"
     drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
     drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
 
-    text = "level that will get you home. On every level you have"
+    text = "portal that will get you home. On every level you have"
     curr_height += 16 + 15
     drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
     drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
@@ -1435,7 +1439,77 @@ def levelOne():
     return objects, traps, collectibles, enemies
 
 def levelTwo():
-    pass
+    block_size = 96
+    
+    carrot_width = 32
+    carrot_height = 32
+    banana_width = 32
+    banana_height = 32
+    potion_width = 38
+    potion_height = 38
+    
+    fire_width = 16
+    fire_height = 32
+    spike_width = 16
+    spike_height = 16
+    portal_width = 33 * 2
+    portal_height = 33 * 2
+    
+    slime_width = 32
+    slime_height = 25 # magnified 4 times
+    demon_width = 81
+    demon_height = 71
+    
+    # all others - magnified twice
+    
+    
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-2 * block_size // block_size, 8)]
+    wall_left = [Block(-2 * block_size, HEIGHT - i * block_size, block_size) for i in range(1, 2 * HEIGHT // block_size)]
+    
+    # generate traps 
+    traps = [
+            *(Fire((2 + i) * block_size + 2 * j * fire_width, HEIGHT - block_size - 2 * fire_height, fire_width, fire_height) for i in range(2) for j in range(3)),
+            *(Spike(6 * block_size + i * spike_width, HEIGHT - block_size - 2 * spike_height, spike_width, spike_height) for i in range(0, 6, 2)),
+            Fire(10 * block_size + 2 * fire_width, HEIGHT - 4 * block_size - 2 * fire_height, fire_width, fire_height),
+            ]   
+    
+    
+    # generate collectibles
+    
+    collectibles = [
+        Banana(-block_size, HEIGHT - block_size - 2 * banana_height, banana_width, banana_height),
+        Carrot(4 * block_size + carrot_width, HEIGHT - 2 * block_size - 2 * carrot_height, carrot_width, carrot_height),
+        Carrot(11 * block_size + carrot_width, HEIGHT - 4 * block_size - carrot_height * 2, carrot_width, carrot_height),
+        Potion(-block_size, HEIGHT - 6 * block_size - 2 * potion_height, potion_width, potion_height),
+        *(Carrot(i * block_size + carrot_width, HEIGHT - (10 + i) * block_size - 2 * carrot_height, carrot_width, carrot_height) for i in range(3)),
+        Carrot(10 * block_size, HEIGHT - 15 * block_size - carrot_height // 2, carrot_width, carrot_height),
+        Potion(16 * block_size + potion_width // 2, HEIGHT - 15 * block_size - 2 * potion_height, potion_width, potion_height),
+        ]
+
+    # create objects list
+    objects = [*floor,
+               *traps,
+               *wall_left,
+               Block(4 * block_size, HEIGHT - 2 * block_size, block_size),
+               *(Block(7 * block_size, HEIGHT - (2 + i) * block_size, block_size) for i in range(2)),
+               *(Block((7 + i) * block_size, HEIGHT - 4 * block_size, block_size) for i in range(6)),
+               *(Block(12 * block_size, HEIGHT - (5 + i) * block_size, block_size) for i in range(10)),
+               Block(4 * block_size, HEIGHT - 6 * block_size, block_size),
+               *(Block((1 - i) * block_size, HEIGHT - 6 * block_size, block_size) for i in range(3)),
+               Block(- block_size, HEIGHT - 8 * block_size, block_size),
+               *(Block(i * block_size, HEIGHT - (10 + i) * block_size, block_size) for i in range(3)),
+               *(Block((3 + i) * block_size, HEIGHT - 13 * block_size, block_size) for i in range(6)),
+               *(Block((12 + i) * block_size, HEIGHT - 15 * block_size, block_size) for i in range(5)),
+            ]
+    
+    # create enemy list
+    enemies = [
+        Slime(3 * block_size, HEIGHT - 13 * block_size - 4 * slime_height, slime_width, slime_height, 2 * block_size),
+        Slime(6 * block_size, HEIGHT - 13 * block_size - 4 * slime_height, slime_width, slime_height, 2 * block_size),
+        Slime(13 * block_size, HEIGHT - 15 * block_size - 4 * slime_height, slime_width, slime_height, 2 * block_size),
+    ]
+    
+    return objects, traps, collectibles, enemies
 
 def levelThree():
     pass
@@ -1509,8 +1583,8 @@ def main(screen):
     scrolling_area_width = 200
     
     offset_y = 0
-    top_height = HEIGHT - 200
-    bottom_height = 400
+    top_height = HEIGHT - 300
+    scrolling_height = HEIGHT
     
     # check if game is paused
     IS_PAUSED = False
@@ -1538,6 +1612,7 @@ def main(screen):
                     if event.key == pygame.K_w and player.jump_count < 2:
                         player.jump()
         if not IS_PAUSED:
+
             player.loop(FPS)
             loopTraps(traps)
             loopCollectibles(collectibles)
@@ -1549,10 +1624,12 @@ def main(screen):
                 (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
                 offset_x += player.x_speed
                 
-            if ((player.rect.top - offset_y <= HEIGHT - top_height) and player.y_speed < 0) or (
-                (player.rect.bottom - offset_y >= HEIGHT - (abs(offset_y) + 50)) and player.y_speed > 0):
+            if ((player.rect.top - offset_y <= scrolling_height - top_height) and player.y_speed < 0) or (
+                (player.rect.bottom - offset_y >= scrolling_height - (abs(offset_y) + 2 * block_size)) and player.y_speed > 0.5):
                 offset_y += player.y_speed
-            
+                
+            scrolling_height = HEIGHT - offset_y
+            top_height = scrolling_height - 300
                 
 
     pygame.quit()
