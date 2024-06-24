@@ -10,7 +10,7 @@ from levels import getLevelMusic, loadLevel
 from player_class import Player
 from loaders import loadSoundEffects
 from screen import drawScreen, drawText
-from events import handleMovement
+from events import handleMovement, handleEnemies, handleCollectibles
 
 def loopTraps(traps):
     for obj in traps:
@@ -95,7 +95,9 @@ def main(screen):
             loopTraps(traps)
             loopCollectibles(collectibles)
             loopEnemies(enemies, FPS)
-            handleMovement(player, objects, collectibles, enemies, sounds)
+            handleMovement(player, objects, sounds)
+            handleEnemies(player, enemies, sounds)
+            handleCollectibles(player, collectibles, sounds)
             drawScreen(screen, level, player, objects, collectibles, enemies, offset_x, offset_y)
 
             if ((player.rect.right - offset_x >= WIDTH - scrolling_area_width) and player.x_speed > 0) or (
