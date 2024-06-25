@@ -378,28 +378,37 @@ def levelSeven():
     return objects, traps, collectibles, enemies
 
 def levelEight():
-    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, WIDTH * 3 // block_size)]
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, WIDTH * 4 // block_size + 8)]
     wall_left = [Block(0, HEIGHT - i * block_size, block_size) for i in range(1, HEIGHT // block_size)]
     
     # generate traps 
     traps = [
-            
+            Portal(47 * block_size - portal_width // 2, HEIGHT - block_size - portal_height * 2, portal_width, portal_height),
             ]   
     
     
     # generate collectibles
     
     collectibles = [
+            Carrot(3 * block_size + carrot_width // 2, HEIGHT - 2 * block_size - 2 * carrot_height, carrot_width, carrot_height),
+            Banana(21 * block_size + banana_width // 2, HEIGHT - 3 * block_size - 2 * banana_height, banana_width, banana_height),
+            Potion(22 * block_size + potion_width // 2, HEIGHT - 3 * block_size - 2 * potion_height, potion_width, potion_height),
         ]
 
     # create objects list
-    objects = [*floor,
-               *traps,
-               *wall_left,
+    objects = [
+            *floor,
+            *traps,
+            *wall_left,
+            Block(3 * block_size, HEIGHT - 2 * block_size, block_size),
+            *(Block((i + 21) * block_size, HEIGHT - (2 + j) * block_size, block_size) for i in range(2) for j in range(2)),
+            *(Block(48 * block_size, HEIGHT - (2 + i) * block_size, block_size) for i in range(6)),
             ]
     
     # create enemy list
     enemies = [
+        *(Slime((5 + i) * block_size, HEIGHT - block_size - 4 * slime_height, slime_width, slime_height, 3 * block_size) for i in range(0, 13, 4)),
+        *(Demon((24 + i) * block_size, HEIGHT - block_size - 2 * demon_height, demon_width, demon_height, 4 * block_size) for i in range(0, 17, 4)),
     ]
     
     return objects, traps, collectibles, enemies
