@@ -155,7 +155,7 @@ def displayControls(screen, width, height):
     drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
     
     curr_height += 16 + 15
-    text = "multiverse. Your goal is to go search on every for the"
+    text = "multiverse. Your goal is to go search on every level for the"
     drawText(screen, text, 16, (0, 0, 0), 10, curr_height)
     drawText(screen, text, 16, (255, 255, 255), 10, curr_height - 2.5)
 
