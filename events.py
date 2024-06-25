@@ -76,7 +76,7 @@ def isEnemyBeingHit(player, enemies, dy):
     enemy_hit = None
     if dy > 0:
         for ent in enemies:
-            if ent.lives and pygame.sprite.collide_mask(player, ent):
+            if ent.health > 0 and pygame.sprite.collide_mask(player, ent):
                 height_index = 1
                 if ent.name == "demon":
                     height_index = 2
