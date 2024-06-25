@@ -60,11 +60,9 @@ def main(screen):
     
     # background scrolling variables
     offset_x = 0
-    scrolling_area_width = 200
+    scrolling_area_width = 300
     
     offset_y = 0
-    top_height = 300
-    bottom_height = 300
     scrolling_height = HEIGHT
     
     # check if game is paused
