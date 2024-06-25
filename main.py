@@ -62,7 +62,7 @@ def main(screen):
     offset_x = 0
     scrolling_area_width = 300
     
-    offset_y = 0
+    offset_y = block_size
     scrolling_height = HEIGHT
     
     # check if game is paused
@@ -105,17 +105,8 @@ def main(screen):
                 (player.rect.left - offset_x <= scrolling_area_width) and player.x_speed < 0):
                 offset_x += player.x_speed
             
-                
-            if scrolling_height > HEIGHT:
-                if ((player.rect.top - offset_y <= scrolling_height - 300) and player.y_speed < 0) or (
-                    (player.rect.bottom - offset_y >= scrolling_height - (abs(offset_y) + 2 * block_size)) and player.y_speed > 0.5):
-                    offset_y += player.y_speed
-                scrolling_height = HEIGHT - offset_y
-            else:
-                if ((player.rect.top - offset_y >= scrolling_height + 300) and player.y_speed < 0) or (
-                    (player.rect.bottom - offset_y <= scrolling_height + (abs(offset_y) + 4 * block_size)) and player.y_speed > 0.5):
-                    offset_y += player.y_speed
-                scrolling_height = HEIGHT + offset_y
+            
+            offset_y = player.rect.y - HEIGHT // 2
 
     pygame.quit()
     quit()
