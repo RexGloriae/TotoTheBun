@@ -115,7 +115,7 @@ def main(screen):
                 scrolling_height = HEIGHT - offset_y
             else:
                 if ((player.rect.top - offset_y >= scrolling_height + 300) and player.y_speed < 0) or (
-                    (player.rect.bottom - offset_y <= scrolling_height + (abs(offset_y) + 2 * block_size)) and player.y_speed > 0.5):
+                    (player.rect.bottom - offset_y <= scrolling_height + (abs(offset_y) + 4 * block_size)) and player.y_speed > 0.5):
                     offset_y += player.y_speed
                 scrolling_height = HEIGHT + offset_y
 
