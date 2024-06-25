@@ -226,28 +226,55 @@ def levelFour():
     return objects, traps, collectibles, enemies
 
 def levelFive():
-    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, WIDTH * 3 // block_size)]
-    wall_left = [Block(0, HEIGHT - i * block_size, block_size) for i in range(1, HEIGHT // block_size)]
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, 3)]
+    wall_left = [Block(0, HEIGHT + i * block_size, block_size) for i in range(-10, 10)]
+    floor_down = [Block(i * block_size, HEIGHT + 10 * block_size, block_size) for i in range(20)]
+    wall_right = [Block(20 * block_size, HEIGHT + i * block_size, block_size) for i in range(-9, 11)]
     
     # generate traps 
     traps = [
-            
+            *(Fire((1 + i) * block_size + j * fire_width, HEIGHT + 10 * block_size - 2 * fire_height, fire_width, fire_height) for i in range(18) for j in range(0, 6, 2)),
+            *(Spike(10 * block_size + j * spike_width, HEIGHT - 6 * block_size - 2 * spike_height, spike_width, spike_height) for j in range(0, 3, 2)),
+            *(Spike(12 * block_size + j * spike_width, HEIGHT - 6 * block_size - 2 * spike_height, spike_width, spike_height) for j in range(2, 6, 2)),
+            Portal(28 * block_size - portal_width // 2, HEIGHT - 9 * block_size - 2 * portal_height, portal_width, portal_height),
             ]   
     
     
     # generate collectibles
     
     collectibles = [
+        Carrot(5 * block_size + carrot_width // 2, HEIGHT - 2 * block_size - 2 * carrot_height, carrot_width, carrot_height),
+        Carrot(9 * block_size + carrot_width // 2, HEIGHT - 2 * block_size - 2 * carrot_height, carrot_width, carrot_height),
+        Carrot(13 * block_size + carrot_width // 2, HEIGHT - 2 * block_size - 2 * carrot_height, carrot_width, carrot_height),
+        Potion(14 * block_size + potion_width // 3, HEIGHT - 6 * block_size - 2 * potion_height, potion_width, potion_height),
+        Banana(11 * block_size + banana_width // 2, HEIGHT - 6 * block_size - 2 * banana_height, banana_width, banana_height),
+        Carrot(16 * block_size + carrot_width // 2, HEIGHT - 7 * block_size - 2 * carrot_height, carrot_width, carrot_height),
+        Carrot(19 * block_size + carrot_width // 2, HEIGHT - 7 * block_size - 2 * carrot_height, carrot_width, carrot_height),
+        Potion(20 * block_size + potion_width // 3, HEIGHT - 9 * block_size - 2 * potion_height, potion_width, potion_height),
         ]
 
     # create objects list
-    objects = [*floor,
-               *traps,
-               *wall_left,
+    objects = [
+                *floor,
+                *traps,
+                *wall_left,
+                *floor_down,
+                *wall_right,
+                Block(5 * block_size, HEIGHT - 2 * block_size, block_size),
+                *(Block((9 + i) * block_size, HEIGHT - 2 * block_size, block_size) for i in range(5)),
+                Block(14 * block_size, HEIGHT - 4 * block_size, block_size),
+                Block(14 * block_size, HEIGHT - 6 * block_size, block_size),
+                *(Block((12 - i) * block_size, HEIGHT - 6 * block_size, block_size) for i in range(3)),
+                *(Block((16 + i) * block_size, HEIGHT - 7 * block_size, block_size) for i in range(5)),
+                *(Block((21 + i) * block_size, HEIGHT - 9 * block_size, block_size) for i in range(8)),
+                *(Block(29 * block_size, HEIGHT - (9 + i) * block_size, block_size) for i in range(5)),
             ]
     
     # create enemy list
     enemies = [
+        Slime(10 * block_size, HEIGHT - 2 * block_size - 4 * slime_height, slime_width, slime_height, 2 * block_size),
+        Demon(17 * block_size, HEIGHT - 7 * block_size - 2 * demon_height, demon_width, demon_height, block_size),
+        Demon(21 * block_size, HEIGHT - 9 * block_size - 2 * demon_height, demon_width, demon_height, 3 * block_size),
     ]
     
     return objects, traps, collectibles, enemies
