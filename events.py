@@ -38,12 +38,18 @@ def handleCollectibles(player, collectibles, sounds):
 
 
 def isEnemyHitting(player, enemies, dx):
-    player.move(dx, 0)
+    height = player.rect.top - player.rect.bottom
+    
+    player.move(dx, height // 2)
     player.update()
     
     attacker = None
     for ent in enemies:
         if ent.lives and ent.invincibility == False:
+            if ent.name == "slime":
+                player.move(0, - height // 2)
+                player.update()
+                
             if pygame.sprite.collide_mask(player, ent):
                 attacker = ent
                 ent.attacks = True
@@ -51,9 +57,17 @@ def isEnemyHitting(player, enemies, dx):
                     ent.direction = "right"
                 else:
                     ent.direction = "left"
+                
+                if ent.name == "slime":    
+                    player.move(0, height // 2)
+                    player.update()
                 break
+            
+            if ent.name == "slime":
+                player.move(0, height // 2)
+                player.update()
     
-    player.move(-dx, 0)
+    player.move(-dx, - height // 2)
     player.update
     
     return attacker
