@@ -65,7 +65,7 @@ def isEnemyBeingHit(player, enemies, dy):
             if ent.lives and pygame.sprite.collide_mask(player, ent):
                 height_index = 1
                 if ent.name == "demon":
-                    height_index = 3
+                    height_index = 2
                 if player.rect.bottom <= ent.rect.top + ent.rect.height // height_index:
                     player.rect.bottom = ent.rect.top
                     player.landed()
