@@ -165,28 +165,62 @@ def levelThree():
     return objects, traps, collectibles, enemies
 
 def levelFour():
-    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, WIDTH * 3 // block_size)]
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(block_size // block_size, 4)]
     wall_left = [Block(0, HEIGHT - i * block_size, block_size) for i in range(1, HEIGHT // block_size)]
     
     # generate traps 
     traps = [
-            
+            *(Spike((16 + i) * block_size + j * spike_width, HEIGHT + block_size - 2 * spike_height, spike_width, spike_height) for i in range(11) for j in range(0, 6, 2)),
+            Fire(19 * block_size + 2 * fire_width, HEIGHT - 7 * block_size - 2 * fire_height, fire_width, fire_height),
+            Portal(34 * block_size - portal_width // 2, HEIGHT - 19 * block_size - 2 * portal_height, portal_width, portal_height),
             ]   
     
     
     # generate collectibles
     
     collectibles = [
+        *(Carrot((4 + i) * block_size - carrot_width // 2, HEIGHT - (i + 1) * block_size - 2 * carrot_height, carrot_width, carrot_height) for i in range(5)),
+        Potion(15 * block_size + potion_width // 2, HEIGHT - 6 * block_size - 2 * potion_height, potion_width, potion_height),
+        Banana(22 * block_size + banana_width, HEIGHT - 5 * block_size - 2 * banana_height, banana_width, banana_height),
+        Carrot(26 * block_size + carrot_width // 2, HEIGHT - 13 * block_size - 2 * carrot_height, carrot_width, carrot_height),
+        Carrot(23 * block_size + carrot_width // 2, HEIGHT - 14 * block_size - 2 * carrot_height, carrot_width, carrot_height),
+        Potion(26 * block_size + potion_width // 2, HEIGHT - 16 * block_size - 2 * potion_height, potion_width, potion_height),
         ]
 
     # create objects list
-    objects = [*floor,
-               *traps,
-               *wall_left,
+    objects = [
+                *floor,
+                *traps,
+                *wall_left,
+                *(Block((4 + i) * block_size, HEIGHT - (i + 1) * block_size, block_size) for i in range(5)),
+                *(Block((9 + i) * block_size, HEIGHT - 6 * block_size, block_size) for i in range(7)),
+
+                *(Block(15 * block_size, HEIGHT - (5 - i) * block_size, block_size) for i in range(6)),
+                *(Block((15 + i) * block_size, HEIGHT + block_size, block_size) for i in range(12)),
+                *(Block(27 * block_size, HEIGHT - (-1 + i) * block_size, block_size) for i in range(21)),
+
+                *(Block((18 + i) * block_size, HEIGHT - 7 * block_size, block_size) for i in range(3)),
+
+                Block(22 * block_size, HEIGHT - 5 * block_size, block_size),
+                Block(26 * block_size, HEIGHT - 7 * block_size, block_size),
+                Block(26 * block_size, HEIGHT - 9 * block_size, block_size),
+                
+                *(Block((23 - i) * block_size, HEIGHT - 11 * block_size, block_size) for i in range(4)),
+                
+                Block(26 * block_size, HEIGHT - 13 * block_size, block_size),
+                Block(23 * block_size, HEIGHT - 14 * block_size, block_size),
+                Block(26 * block_size, HEIGHT - 16 * block_size, block_size),
+                Block(26 * block_size, HEIGHT - 18 * block_size, block_size),
+                
+                *(Block((28 + i) * block_size, HEIGHT - 19 * block_size, block_size) for i in range(7)),
+                *(Block(35 * block_size, HEIGHT - (19 + i) * block_size, block_size) for i in range(11)),
             ]
     
     # create enemy list
     enemies = [
+        *(Slime((10 + i) * block_size, HEIGHT - 6 * block_size - 4 * slime_height, slime_width, slime_height, block_size) for i in range(0, 4, 3)),
+        Slime(20 * block_size, HEIGHT - 11 * block_size - 4 * slime_height, slime_width, slime_height, 2 * block_size),
+        Demon(28 * block_size, HEIGHT - 19 * block_size - 2 * demon_height, demon_width, demon_height, 3 * block_size),
     ]
     
     return objects, traps, collectibles, enemies
