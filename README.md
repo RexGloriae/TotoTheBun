@@ -1,5 +1,5 @@
-~~Toto the Bun: the Great Carrot Adventure~~
+<img src="https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
 
-This is a python platformer game, inspired by the older Mario games.
+# Toto the Bun: the Great Carrot Adventure
 
-Have Fun!
+A pygame platformer similar to retro games like Super Mario.
