@@ -2,7 +2,7 @@
 
 echo "[SETUP] Starting installation of "Toto the Bun: The Great Carrot Adventure"..."
 
-if ! command -v python3 &> /dev/null then
+if ! command -v python3 &> /dev/null; then
     echo "Python3 could not be found. Please install Python3 first..."
     exit 1
 fi
