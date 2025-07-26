@@ -34,7 +34,7 @@ Toto the Bun: The Great Carrot Adventures is a 2D Retro platformer developed usi
 Once the installation is complete, you can run the game using the following command:
 
 ```
-python3 src/main.py
+source venv/bin/activate && python3 src/main.py
 ```
 
 ## License
