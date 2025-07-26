@@ -20,7 +20,7 @@ def unzip(zip_path, extract_to):
 def main():
     url = "https://github.com/RexGloriae/TotoTheBun/releases/download/v1.0.0/assets.zip"
     zip_filename = "assets.zip"
-    assets_dir = "assets"
+    assets_dir = "."
     
     download(url, zip_filename)
     unzip(zip_filename, assets_dir)
