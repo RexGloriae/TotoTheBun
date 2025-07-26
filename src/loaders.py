@@ -8,37 +8,37 @@ from img import flipImg
 def loadSoundEffects():
     all_sounds = {}
     
-    banana = pygame.mixer.Sound("assets/Sounds/Effects/banana.wav")
+    banana = pygame.mixer.Sound("../assets/Sounds/Effects/banana.wav")
     all_sounds["banana"] = banana
     
-    carrot = pygame.mixer.Sound("assets/Sounds/Effects/carrot.wav")
+    carrot = pygame.mixer.Sound("../assets/Sounds/Effects/carrot.wav")
     all_sounds["carrot"] = carrot
     
-    demon_death = pygame.mixer.Sound("assets/Sounds/Effects/demon_death.wav")
+    demon_death = pygame.mixer.Sound("../assets/Sounds/Effects/demon_death.wav")
     all_sounds["demon_death"] = demon_death
     
-    enemy_hit = pygame.mixer.Sound("assets/Sounds/Effects/enemy_hit.wav")
+    enemy_hit = pygame.mixer.Sound("../assets/Sounds/Effects/enemy_hit.wav")
     all_sounds["enemy_hit"] = enemy_hit
     
-    health = pygame.mixer.Sound("assets/Sounds/Effects/health_potion.wav")
+    health = pygame.mixer.Sound("../assets/Sounds/Effects/health_potion.wav")
     all_sounds["health_potion"] = health
     
-    lvl = pygame.mixer.Sound("assets/Sounds/Effects/level_finish.wav")
+    lvl = pygame.mixer.Sound("../assets/Sounds/Effects/level_finish.wav")
     all_sounds["level_finish"] = lvl
     
-    death = pygame.mixer.Sound("assets/Sounds/Effects/player_death.wav")
+    death = pygame.mixer.Sound("../assets/Sounds/Effects/player_death.wav")
     all_sounds["player_death"] = death
     
-    hit = pygame.mixer.Sound("assets/Sounds/Effects/player_hit.flac")
+    hit = pygame.mixer.Sound("../assets/Sounds/Effects/player_hit.flac")
     all_sounds["player_hit"] = hit
     
-    slime = pygame.mixer.Sound("assets/Sounds/Effects/slime_death.wav")
+    slime = pygame.mixer.Sound("../assets/Sounds/Effects/slime_death.wav")
     all_sounds["slime_death"] = slime
     
     return all_sounds
 
 def loadCarrotCollectible(width, height):
-    carrot = pygame.image.load(f'assets/Collectibles/Carrot.png').convert_alpha()
+    carrot = pygame.image.load(f'../assets/Collectibles/Carrot.png').convert_alpha()
     scale = height / carrot.get_height()
     new_width = carrot.get_width() * scale
     new_height = carrot.get_height() * scale
@@ -47,7 +47,7 @@ def loadCarrotCollectible(width, height):
     return pygame.transform.scale2x(carrot)
 
 def loadBananaCollectible(width, height):
-    banana = pygame.image.load(f'assets/Collectibles/Banana_Peeled.png').convert_alpha()
+    banana = pygame.image.load(f'../assets/Collectibles/Banana_Peeled.png').convert_alpha()
     scale = height / banana.get_height()
     new_width = banana.get_width() * scale
     new_height = banana.get_height() * scale
@@ -56,7 +56,7 @@ def loadBananaCollectible(width, height):
     return pygame.transform.scale2x(banana)
 
 def loadHealthPotionCollectible(width, height):
-    potion = pygame.image.load(f'assets/Collectibles/Health_Potion.png').convert_alpha()
+    potion = pygame.image.load(f'../assets/Collectibles/Health_Potion.png').convert_alpha()
     scale = height / potion.get_height()
     new_width = potion.get_width() * scale
     new_height = potion.get_height() * scale
@@ -65,7 +65,7 @@ def loadHealthPotionCollectible(width, height):
     return pygame.transform.scale2x(potion)
 
 def loadFireSheet(width, height):
-    path = join("assets", "Traps", "Fire")
+    path = join("../assets", "Traps", "Fire")
     images = [f for f in listdir(path) if isfile(join(path, f))]
 
     fire = {}
@@ -85,7 +85,7 @@ def loadFireSheet(width, height):
     return fire
 
 def loadSpike(width, height):  
-    spike = pygame.image.load(f'assets/Traps/Spike/Idle.png').convert_alpha()
+    spike = pygame.image.load(f'../assets/Traps/Spike/Idle.png').convert_alpha()
     scale = height / spike.get_height()
     new_width = spike.get_width() * scale
     new_height = spike.get_height() * scale
@@ -96,7 +96,7 @@ def loadSpike(width, height):
 def loadPortal(width, height):
     portal = []
     for i in range(1, 7):
-        img = pygame.image.load(f'assets/Portal/p{i}.png').convert_alpha()
+        img = pygame.image.load(f'../assets/Portal/p{i}.png').convert_alpha()
         scale = height / img.get_height()
         new_width = img.get_width() * scale
         new_height = img.get_height() * scale
@@ -112,7 +112,7 @@ def loadSpriteSheet(player_width, player_height):
     # Load Running Sprites
     running_sprites = []
     for i in range(1, 5):
-        running_sprite = pygame.image.load(f'assets/Player_Sprites/Running/a{i}.png').convert_alpha()
+        running_sprite = pygame.image.load(f'../assets/Player_Sprites/Running/a{i}.png').convert_alpha()
         scale = player_height / running_sprite.get_height()
         new_width = running_sprite.get_width() * scale
         new_height = running_sprite.get_height() * scale
@@ -125,7 +125,7 @@ def loadSpriteSheet(player_width, player_height):
     # Load Jumping Sprites
     jumping_sprites = []
     
-    sprite = pygame.image.load(f'assets/Player_Sprites/Jump/a2.png').convert_alpha()
+    sprite = pygame.image.load(f'../assets/Player_Sprites/Jump/a2.png').convert_alpha()
     scale = player_height / sprite.get_height()
     new_width = sprite.get_width() * scale
     new_height = sprite.get_height() * scale
@@ -138,7 +138,7 @@ def loadSpriteSheet(player_width, player_height):
     # Load Fall Sprites
     falling_sprites = []
     
-    sprite = pygame.image.load(f'assets/Player_Sprites/Jump/a5.png').convert_alpha()
+    sprite = pygame.image.load(f'../assets/Player_Sprites/Jump/a5.png').convert_alpha()
     scale = player_height / sprite.get_height()
     new_width = sprite.get_width() * scale
     new_height = sprite.get_height() * scale
@@ -151,7 +151,7 @@ def loadSpriteSheet(player_width, player_height):
     # Load Faint Sprite
     faint_sprites = []
     for i in range(1, 6):
-        sprite = pygame.image.load(f'assets/Player_Sprites/Faint/a{i}.png').convert_alpha()
+        sprite = pygame.image.load(f'../assets/Player_Sprites/Faint/a{i}.png').convert_alpha()
         scale = player_height / sprite.get_height()
         new_width = sprite.get_width() * scale
         new_height = sprite.get_height() * scale
@@ -164,7 +164,7 @@ def loadSpriteSheet(player_width, player_height):
     # Load Dizzy Sprite
     dizzy_sprites = []
     for i in range(1, 3):
-        sprite = pygame.image.load(f'assets/Player_Sprites/Dizzy/a{i}.png').convert_alpha()
+        sprite = pygame.image.load(f'../assets/Player_Sprites/Dizzy/a{i}.png').convert_alpha()
         scale = player_height / sprite.get_height()
         new_width = sprite.get_width() * scale
         new_height = sprite.get_height() * scale
@@ -177,7 +177,7 @@ def loadSpriteSheet(player_width, player_height):
     # Load Idle Sprite
     idle_sprites = []
     for i in range(1, 3):
-        sprite = pygame.image.load(f'assets/Player_Sprites/Idle/a{i}.png').convert_alpha()
+        sprite = pygame.image.load(f'../assets/Player_Sprites/Idle/a{i}.png').convert_alpha()
         scale = player_height / sprite.get_height()
         new_width = sprite.get_width() * scale
         new_height = sprite.get_height() * scale
@@ -190,7 +190,7 @@ def loadSpriteSheet(player_width, player_height):
     # load Shoot Sprite
     shoot_sprites = []
     for i in range(1, 4):
-        sprite = pygame.image.load(f'assets/Player_Sprites/Shoot/a{i}.png').convert_alpha()
+        sprite = pygame.image.load(f'../assets/Player_Sprites/Shoot/a{i}.png').convert_alpha()
         scale = player_height / sprite.get_height()
         new_width = sprite.get_width() * scale
         new_height = sprite.get_height() * scale
@@ -203,7 +203,7 @@ def loadSpriteSheet(player_width, player_height):
     # load explode sprite
     explode_sprite = []
     for i in range(1, 6):
-        sprite = pygame.image.load(f'assets/Player_Sprites/Explode/a{i}.png').convert_alpha()
+        sprite = pygame.image.load(f'../assets/Player_Sprites/Explode/a{i}.png').convert_alpha()
         scale = player_height / sprite.get_height()
         new_width = sprite.get_width() * scale
         new_height = sprite.get_height() * scale
@@ -219,7 +219,7 @@ def loadHealthSprites(width, height):
     # load Health Sprite
     health_sprites = []
     for i in range(1, 9):
-        sprite = pygame.image.load(f'assets/Player_Sprites/HearTile/Cuore{i}.png').convert_alpha()
+        sprite = pygame.image.load(f'../assets/Player_Sprites/HearTile/Cuore{i}.png').convert_alpha()
         scale = height / sprite.get_height()
         new_width = sprite.get_width() * scale
         new_height = sprite.get_height() * scale
@@ -230,7 +230,7 @@ def loadHealthSprites(width, height):
 
 # load terrain
 def loadBlock(size):
-    path = join("assets", "Terrain", "Terrain.png")
+    path = join("../assets", "Terrain", "Terrain.png")
     image = pygame.image.load(path).convert_alpha()
     surface = pygame.Surface((size, size), pygame.SRCALPHA, 32)
     rect = pygame.Rect(96, 0, size, size)
@@ -244,9 +244,9 @@ def loadEnemySprites(width, height, name):
     
     path = None
     if name == "demon":
-        path = "assets/Enemy/Demon/"
+        path = "../assets/Enemy/Demon/"
     else:
-        path = "assets/Enemy/Slime/"
+        path = "../assets/Enemy/Slime/"
         
     # load attack sprites
     attack_sprites = []
@@ -331,28 +331,28 @@ def getBackground(level):
     if level > 8:
         level = level%8 + 1
     if level == 1:
-        img = pygame.image.load("assets/Backgrounds/m1/PRE_ORIG_SIZE.png")
+        img = pygame.image.load("../assets/Backgrounds/m1/PRE_ORIG_SIZE.png")
     elif level == 2:
-        img = pygame.image.load("assets/Backgrounds/m2/PRE_ORIG_SIZE.png")
+        img = pygame.image.load("../assets/Backgrounds/m2/PRE_ORIG_SIZE.png")
     elif level == 3:
-        img = pygame.image.load("assets/Backgrounds/m3/PRE_ORIG_SIZE.png")
+        img = pygame.image.load("../assets/Backgrounds/m3/PRE_ORIG_SIZE.png")
     elif level == 4:
-        img = pygame.image.load("assets/Backgrounds/m4/PRE_ORIG_SIZE.png")
+        img = pygame.image.load("../assets/Backgrounds/m4/PRE_ORIG_SIZE.png")
     elif level == 5:
-        img = pygame.image.load("assets/Backgrounds/m5/PRE_ORIG_SIZE.png")
+        img = pygame.image.load("../assets/Backgrounds/m5/PRE_ORIG_SIZE.png")
     elif level == 6:
-        img = pygame.image.load("assets/Backgrounds/m6/PRE_ORIG_SIZE.png")
+        img = pygame.image.load("../assets/Backgrounds/m6/PRE_ORIG_SIZE.png")
     elif level == 7:
-        img = pygame.image.load("assets/Backgrounds/m7/PRE_ORIG_SIZE.png")
+        img = pygame.image.load("../assets/Backgrounds/m7/PRE_ORIG_SIZE.png")
     elif level == 8:
-        img = pygame.image.load("assets/Backgrounds/m8/PRE_ORIG_SIZE.png")
+        img = pygame.image.load("../assets/Backgrounds/m8/PRE_ORIG_SIZE.png")
     
     return img
 
 def loadLevelImgs(width, height):
     images = []
     for i in range(1, 9):
-        img = pygame.image.load(f'assets/Level_Buttons/0{i}.png').convert_alpha()
+        img = pygame.image.load(f'../assets/Level_Buttons/0{i}.png').convert_alpha()
         scale = height / img.get_height()
         new_width = img.get_width() * scale
         new_height = img.get_height() * scale
@@ -362,7 +362,7 @@ def loadLevelImgs(width, height):
     return images
 
 def loadBackImg(width, height):
-    img = pygame.image.load("assets/Menu_Buttons/4.png").convert_alpha()
+    img = pygame.image.load("../assets/Menu_Buttons/4.png").convert_alpha()
     scale = height / img.get_height()
     new_width = img.get_width() * scale
     new_height = img.get_height() * scale
