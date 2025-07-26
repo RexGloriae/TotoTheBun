@@ -1,0 +1,5 @@
+# ignore assets
+assets/
+__pycache__/
+*.pyc
+*.zip
